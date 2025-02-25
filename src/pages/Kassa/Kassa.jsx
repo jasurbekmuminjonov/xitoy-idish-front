@@ -35,6 +35,7 @@ const Kassa = () => {
   const productsColumn = [
     { title: "Tovar nomi", dataIndex: "name", key: "name" },
     { title: "Ombor", render: (_, record) => record.warehouse.name },
+    { title: "Shtrix kod", dataIndex: "barcode" },
     { title: "Soni", dataIndex: "quantity" },
     { title: "Sotish narxi", render: (_, record) => record.currency === "USD" ? record.sellingPrice.value * usdRate.rate : record.sellingPrice.value },
     {
@@ -57,6 +58,7 @@ const Kassa = () => {
   const basketColumn = [
     { title: "Tovar nomi", dataIndex: "name", key: "name" },
     { title: "Ombor", render: (_, record) => record.warehouse.name },
+    { title: "Shtrix kod", dataIndex: "barcode" },
     {
       title: "Soni", render: (_, record) => (
         <div className="table_actions">
@@ -137,13 +139,16 @@ const Kassa = () => {
         </div>
         <Table size='small' style={{ maxHeight: "100%" }} pagination={{ pageSize: 4 }} columns={productsColumn} dataSource={filteredProducts} rowKey="id" />
       </div>
-      <div className="basket">
-        <Table size='small' style={{ maxHeight: "100%" }} pagination={{ pageSize: 5 }} columns={basketColumn} dataSource={basket} rowKey="id" />
-        <p>Umumiy to'lov: {basket.reduce((acc, item) => acc + item.sellingPrice.value * item.quantity, 0).toLocaleString()}</p>
-        <Button type='primary' onClick={() => setIsModalVisible(true)}>
-          Sotish
-        </Button>
-      </div>
+      {basket.length > 0 && (
+        <div className="basket">
+          <Table size='small' style={{ maxHeight: "100%" }} pagination={{ pageSize: 5 }} columns={basketColumn} dataSource={basket} rowKey="id" />
+          <p>Umumiy to'lov: {basket.reduce((acc, item) => acc + item.sellingPrice.value * item.quantity, 0).toLocaleString()}</p>
+          <Button type='primary' onClick={() => setIsModalVisible(true)}>
+            Sotish
+          </Button>
+        </div>
+      )}
+
       <Modal
         title="To'lov usulini tanlash"
         visible={isModalVisible}
