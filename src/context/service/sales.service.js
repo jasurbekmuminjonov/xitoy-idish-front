@@ -8,12 +8,14 @@ export const salesApi = apiSlice.injectEndpoints({
         method: "POST",
         body: saleData,
       }),
+      invalidatesTags: ["Sale", "Product"],
     }),
     getSalesHistory: builder.query({
       query: () => ({
         url: "/sales/history",
         method: "GET",
       }),
+      providesTags: ["Sale"],
     }),
   }),
   overrideExisting: false,
