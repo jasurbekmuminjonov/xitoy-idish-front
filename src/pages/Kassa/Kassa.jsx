@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGetProductsQuery } from '../../context/service/product.service';
-import { Button, Input, Table, Modal, Select, Form } from 'antd';
+import { Button, Input, Table, Modal, Select, Form, message } from 'antd';
 import './kassa.css';
 import { MdDeleteForever } from 'react-icons/md';
 import { useSellProductMutation } from '../../context/service/sales.service';
@@ -112,6 +112,10 @@ const Kassa = () => {
   ];
 
   const handleSell = () => {
+    if (!paymentMethod) {
+      message.error("To'lov usulini tanlashingiz kerak!");
+      return;
+    }
     basket.forEach(item => {
       saleProduct({
         productId: item._id,
@@ -123,6 +127,7 @@ const Kassa = () => {
     setIsModalVisible(false);
     setBasket([]);
     setPaymentMethod('');
+    message.success("Sotuv amalga oshirildi");
   };
 
   return (
@@ -151,12 +156,15 @@ const Kassa = () => {
 
       <Modal
         title="To'lov usulini tanlash"
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleSell}
         onCancel={() => setIsModalVisible(false)}
       >
         <Form>
-          <Form.Item label="To'lov usuli">
+          <Form.Item
+            label="To'lov usuli"
+            rules={[{ required: true, message: "To'lov usulini tanlang" }]}
+          >
             <Select
               value={paymentMethod}
               onChange={value => setPaymentMethod(value)}
