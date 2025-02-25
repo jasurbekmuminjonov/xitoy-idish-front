@@ -1,0 +1,28 @@
+import React, { memo } from "react";
+import { Routes, Route } from "react-router-dom";
+import Layout from "./layout/layout";
+import Login from "./pages/auth/login";
+import Admin from "./pages/admin/admin";
+import Home from "./pages/Home/Home";
+
+export const Routera = memo(() => {
+  const role = localStorage.getItem("role");
+  const token = localStorage.getItem("access_token") || null;
+
+  return (
+    <>
+      {token ? (
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={role === "admin" ? <Home /> : <Admin />} />
+            <Route path="*" element={<h1>Page Not Found</h1>} />
+          </Route>
+        </Routes>
+      ) : (
+        <Login />
+      )}
+    </>
+  );
+});
+
+export default Routera;

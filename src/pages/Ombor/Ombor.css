@@ -1,0 +1,13 @@
+/* Styles for Ombor component */
+
+.table-container {
+  padding: 24px;
+  background: #fff;
+  min-height: 360px;
+}
+.ant-card {
+  transition: transform 0.3s;
+}
+.ant-card:hover {
+  transform: scale(1.05);
+}
