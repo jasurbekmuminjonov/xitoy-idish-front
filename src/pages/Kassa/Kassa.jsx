@@ -1,25 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { useGetProductsQuery } from "../../context/service/product.service";
+import {
+  useGetClientsQuery,
+  useCreateClientMutation,
+} from "../../context/service/client.service";
 import { Button, Input, Table, Modal, Select, Form, message } from "antd";
 import "./kassa.css";
 import { MdDeleteForever } from "react-icons/md";
 import { useSellProductMutation } from "../../context/service/sales.service";
 import { useGetUsdRateQuery } from "../../context/service/usd.service";
+import { useCreateDebtMutation } from "../../context/service/debt.service";
 
 const Kassa = () => {
   const { data: products = [] } = useGetProductsQuery();
   const { data: usdRate = [] } = useGetUsdRateQuery();
-  console.log(usdRate);
+  const { data: clients = [] } = useGetClientsQuery();
+  const [createClient] = useCreateClientMutation();
+  const [createDebt] = useCreateDebtMutation();
+  const [sellProduct] = useSellProductMutation();
 
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [basket, setBasket] = useState([]);
-  const [saleProduct] = useSellProductMutation();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
+  const [dueDate, setDueDate] = useState(null);
 
   useEffect(() => {
     const result = products.filter(
@@ -34,8 +42,6 @@ const Kassa = () => {
     }
   }, [products, searchText]);
 
-  console.log(usdRate);
-
   const productsColumn = [
     { title: "Tovar nomi", dataIndex: "name", key: "name" },
     { title: "Ombor", render: (_, record) => record.warehouse.name },
@@ -44,9 +50,9 @@ const Kassa = () => {
     {
       title: "Sotish narxi",
       render: (_, record) =>
-        record.currency === "USD"
-          ? record.sellingPrice.value * usdRate.rate
-          : record.sellingPrice.value,
+        record.sellingPrice.currency === "USD"
+          ? (record.sellingPrice.value * usdRate.rate).toFixed(2)
+          : record.sellingPrice.value.toFixed(2),
     },
     {
       title: "Amallar",
@@ -62,9 +68,10 @@ const Kassa = () => {
                   quantity: 1,
                   sellingPrice: {
                     value:
-                      record.currency === "USD"
+                      record.sellingPrice.currency === "USD"
                         ? record.sellingPrice.value * usdRate.rate
                         : record.sellingPrice.value,
+                    currency: record.sellingPrice.currency,
                   },
                 },
               ]);
@@ -136,7 +143,7 @@ const Kassa = () => {
             });
             setBasket(newBasket);
           }}
-          defaultValue={record.sellingPrice.value}
+          defaultValue={record.sellingPrice.value.toFixed(2)}
         />
       ),
     },
@@ -155,29 +162,65 @@ const Kassa = () => {
     },
   ];
 
-  const handleSell = () => {
-    if (!paymentMethod || !clientName || !clientPhone || !clientAddress) {
+  const handleSell = async () => {
+    if (
+      !paymentMethod ||
+      !clientName ||
+      !clientPhone ||
+      !clientAddress ||
+      (paymentMethod === "credit" && !dueDate)
+    ) {
       message.error("Barcha maydonlarni to'ldirishingiz kerak!");
       return;
     }
-    basket.forEach((item) => {
-      saleProduct({
-        productId: item._id,
-        quantity: item.quantity,
-        warehouseId: item.warehouse._id,
-        paymentMethod: paymentMethod,
-        clientName: clientName,
-        clientPhone: clientPhone,
-        clientAddress: clientAddress,
-      });
-    });
-    setIsModalVisible(false);
-    setBasket([]);
-    setPaymentMethod("");
-    setClientName("");
-    setClientPhone("");
-    setClientAddress("");
-    message.success("Sotuv amalga oshirildi");
+
+    try {
+      const clientResponse = await createClient({
+        name: clientName,
+        phone: clientPhone,
+        address: clientAddress,
+      }).unwrap();
+
+      const clientId = clientResponse._id;
+
+      if (paymentMethod === "credit") {
+        await Promise.all(
+          basket.map((item) =>
+            createDebt({
+              clientId,
+              productId: item._id,
+              quantity: item.quantity,
+              totalAmount: item.sellingPrice.value * item.quantity,
+              paymentMethod,
+              dueDate,
+            }).unwrap()
+          )
+        );
+      } else {
+        await Promise.all(
+          basket.map((item) =>
+            sellProduct({
+              clientId,
+              productId: item._id,
+              quantity: item.quantity,
+              warehouseId: item.warehouse._id,
+              paymentMethod,
+            }).unwrap()
+          )
+        );
+      }
+
+      setIsModalVisible(false);
+      setBasket([]);
+      setPaymentMethod("");
+      setClientName("");
+      setClientPhone("");
+      setClientAddress("");
+      setDueDate(null);
+      message.success("Sotuv amalga oshirildi");
+    } catch (error) {
+      message.error("Xatolik yuz berdi");
+    }
   };
 
   return (
@@ -198,7 +241,7 @@ const Kassa = () => {
           pagination={{ pageSize: 4 }}
           columns={productsColumn}
           dataSource={filteredProducts}
-          rowKey="id"
+          rowKey="_id"
         />
       </div>
       {basket.length > 0 && (
@@ -209,7 +252,7 @@ const Kassa = () => {
             pagination={{ pageSize: 5 }}
             columns={basketColumn}
             dataSource={basket}
-            rowKey="id"
+            rowKey="_id"
           />
           <p>
             Umumiy to'lov:{" "}
@@ -243,6 +286,7 @@ const Kassa = () => {
             >
               <Select.Option value="cash">Naqd</Select.Option>
               <Select.Option value="card">Plastik karta</Select.Option>
+              <Select.Option value="credit">Qarz</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item
@@ -257,7 +301,7 @@ const Kassa = () => {
             />
           </Form.Item>
           <Form.Item
-            label="Telefon "
+            label="Telefon raqami"
             rules={[{ required: true, message: "Telefon raqamini kiriting" }]}
           >
             <Input
@@ -269,7 +313,7 @@ const Kassa = () => {
           </Form.Item>
           <Form.Item
             label="Manzili"
-            rules={[{ required: true, message: "Manzilini kiriting" }]}
+            rules={[{ required: true, message: "Manzili kiriting" }]}
           >
             <Input
               type="text"
@@ -278,6 +322,18 @@ const Kassa = () => {
               placeholder="Manzili"
             />
           </Form.Item>
+          {paymentMethod === "credit" && (
+            <Form.Item
+              label="Qarz muddati"
+              rules={[{ required: true, message: "Qarz muddatini kiriting" }]}
+            >
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

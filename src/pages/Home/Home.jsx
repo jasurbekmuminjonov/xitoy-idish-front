@@ -9,12 +9,14 @@ import {
   ShoppingOutlined,
   DollarOutlined,
   TeamOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import Admin from "../Adminlar/Adminlar";
 import Ombor from "../Ombor/Ombor";
 import Product from "../Product/Product";
 import Kassa from "../Kassa/Kassa";
 import Client from "../Client/Client";
+import Debtors from "../Debt/Debtors";
 
 const { Header, Sider, Content } = Layout;
 
@@ -38,6 +40,8 @@ export default function Home() {
         return <Kassa />;
       case "client":
         return <Client />;
+      case "debtors":
+        return <Debtors />;
       case "home":
       default:
         return <h1>statistika</h1>;
@@ -72,6 +76,9 @@ export default function Home() {
           </Menu.Item>
           <Menu.Item key="client" icon={<TeamOutlined />}>
             Clientlar
+          </Menu.Item>
+          <Menu.Item key="debtors" icon={<CreditCardOutlined />}>
+            Qarzdorlar
           </Menu.Item>
         </Menu>
       </Sider>
