@@ -23,7 +23,6 @@ import {
 } from "../../context/service/ombor.service";
 import { useGetProductsByWarehouseQuery } from "../../context/service/product.service";
 import "./Ombor.css";
-
 export default function Ombor() {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -171,6 +170,11 @@ export default function Ombor() {
       title: "Mahsulot Nomi",
       dataIndex: "name",
       key: "name",
+    },
+    {
+      title: "Soni",
+      dataIndex: "quantity",
+      key: "quantity ",
     },
     {
       title: "Birlik",
