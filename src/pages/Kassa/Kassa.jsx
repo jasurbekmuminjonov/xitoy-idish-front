@@ -20,7 +20,7 @@ const Kassa = () => {
   const [createClient] = useCreateClientMutation();
   const [createDebt] = useCreateDebtMutation();
   const [sellProduct] = useSellProductMutation();
-
+  const [selectedClient, setSelectedClient] = useState("")
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [basket, setBasket] = useState([]);
@@ -169,23 +169,23 @@ const Kassa = () => {
   const handleSell = async () => {
     if (
       !paymentMethod ||
-      !clientName ||
-      !clientPhone ||
-      !clientAddress ||
+      (!selectedClient && (!clientName || !clientPhone || !clientAddress)) ||
       (paymentMethod === "credit" && !dueDate)
     ) {
       message.error("Barcha maydonlarni to'ldirishingiz kerak!");
       return;
     }
-
     try {
-      const clientResponse = await createClient({
-        name: clientName,
-        phone: clientPhone,
-        address: clientAddress,
-      }).unwrap();
+      let clientId = selectedClient;
 
-      const clientId = clientResponse._id;
+      if (!selectedClient) {
+        const clientResponse = await createClient({
+          name: clientName,
+          phone: clientPhone,
+          address: clientAddress,
+        }).unwrap();
+        clientId = clientResponse._id;
+      }
 
       if (paymentMethod === "credit") {
         await Promise.all(
@@ -195,6 +195,7 @@ const Kassa = () => {
               productId: item._id,
               quantity: item.quantity,
               totalAmount: item.sellingPrice.value * item.quantity,
+              sellingPrice: item.sellingPrice.value,
               paymentMethod,
               discount: paymentDiscount,
               dueDate,
@@ -209,6 +210,7 @@ const Kassa = () => {
               productId: item._id,
               discount: paymentDiscount,
               quantity: item.quantity,
+              sellingPrice: item.sellingPrice.value,
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()
@@ -229,8 +231,9 @@ const Kassa = () => {
     }
   };
 
+
   return (
-    <div className="page">
+    <div className="page" style={{ marginTop: "8px", paddingInline: "4px" }}>
       <div className="products">
         <div className="products_header">
           <input
@@ -311,43 +314,71 @@ const Kassa = () => {
               }
             </Select>
           </Form.Item>
-          <p style={{ margin: "0" }}>Mijoz ismi</p>
-          <Form.Item
-            rules={[{ required: true, message: "Mijoz ismini kiriting" }]}
-          >
-            <Input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Mijoz ismi"
-            />
-          </Form.Item>
-          <p style={{ margin: "0" }}>
-            Telefon raqami
-          </p>
-          <Form.Item
+          <p style={{ margin: "0" }}>Haridor</p>
+          <Form.Item>
+            <Select
+              showSearch
+              value={selectedClient}
+              onChange={(value) => setSelectedClient(value)}
+              placeholder="Haridorni tanlang"
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              <Select.Option value="">Yangi haridor</Select.Option>
+              {clients.map((client) => (
+                <Select.Option key={client._id} value={client._id}>
+                  {client.name}
+                </Select.Option>
+              ))}
+            </Select>
+            <Form.Item />
+            {
+              selectedClient === "" && (
+                <>
+                  <p style={{ margin: "0" }}>Mijoz ismi</p>
+                  <Form.Item
+                    rules={[{ required: true, message: "Mijoz ismini kiriting" }]}
+                  >
+                    <Input
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Mijoz ismi"
+                    />
+                  </Form.Item>
+                  <p style={{ margin: "0" }}>
+                    Telefon raqami
+                  </p>
+                  <Form.Item
 
-            rules={[{ required: true, message: "Telefon raqamini kiriting" }]}
-          >
-            <Input
-              type="text"
-              value={clientPhone}
-              onChange={(e) => setClientPhone(e.target.value)}
-              placeholder="Telefon raqami"
-            />
-          </Form.Item>
-          <p style={{ margin: "0" }}>Manzili</p>
-          <Form.Item
+                    rules={[{ required: true, message: "Telefon raqamini kiriting" }]}
+                  >
+                    <Input
+                      type="text"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      placeholder="Telefon raqami"
+                    />
+                  </Form.Item>
+                  <p style={{ margin: "0" }}>Manzili</p>
+                  <Form.Item
 
-            rules={[{ required: true, message: "Manzili kiriting" }]}
-          >
-            <Input
-              type="text"
-              value={clientAddress}
-              onChange={(e) => setClientAddress(e.target.value)}
-              placeholder="Manzili"
-            />
+                    rules={[{ required: true, message: "Manzili kiriting" }]}
+                  >
+                    <Input
+                      type="text"
+                      value={clientAddress}
+                      onChange={(e) => setClientAddress(e.target.value)}
+                      placeholder="Manzili"
+                    />
+                  </Form.Item>
+                </>
+              )
+            }
           </Form.Item>
+
           {paymentMethod === "credit" && (
             <>
               <p style={{ margin: "0" }}>Qarz muddati</p>

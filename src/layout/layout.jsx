@@ -103,7 +103,6 @@ const Layout = memo(() => {
           </div>
         </header>
       )}
-
       <section className="section">
         <Outlet />
       </section>

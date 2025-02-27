@@ -76,9 +76,6 @@ export default function Home() {
           <Menu.Item key="product" icon={<ShoppingOutlined />}>
             Mahsulotlar
           </Menu.Item>
-          <Menu.Item key="kassa" icon={<DollarOutlined />}>
-            Kassa
-          </Menu.Item>
           <Menu.Item key="client" icon={<TeamOutlined />}>
             Clientlar
           </Menu.Item>
