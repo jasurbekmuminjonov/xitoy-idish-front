@@ -9,6 +9,7 @@ import {
   useGetDebtsByClientQuery,
   usePayDebtMutation,
 } from "../../context/service/debt.service";
+import moment from "moment";
 
 const Client = () => {
   const { data: clients = [] } = useGetClientsQuery();
@@ -121,7 +122,7 @@ const Client = () => {
       dataIndex: "remainingAmount",
       key: "remainingAmount",
     },
-    { title: "Qarz muddati", dataIndex: "dueDate", key: "dueDate" },
+    { title: "Qarz muddati", dataIndex: "dueDate", render: (text) => moment(text).format("DD.MM.YYYY"), key: "dueDate" },
     {
       title: "Holati",
       dataIndex: "status",
