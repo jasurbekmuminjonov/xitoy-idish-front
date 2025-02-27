@@ -1,6 +1,7 @@
 import React from "react";
 import { useGetSalesHistoryQuery } from "../../context/service/sales.service";
 import { Table } from "antd";
+import moment from "moment";
 // import "./sales.css";
 
 const Sales = () => {
@@ -16,7 +17,24 @@ const Sales = () => {
     { title: "Ombor", dataIndex: ["warehouseId", "name"], key: "warehouseId" },
     { title: "Soni", dataIndex: "quantity", key: "quantity" },
     { title: "To'lov usuli", dataIndex: "paymentMethod", key: "paymentMethod" },
-    { title: "Sotish sanasi", dataIndex: "saleDate", key: "saleDate" },
+    {
+      title: "Sotib olish narxi",
+      dataIndex: ["productId", "purchasePrice", "value"],
+      key: "purchasePrice",
+      render: (text) => `${text} SUM`,
+    },
+    {
+      title: "Sotish narxi",
+      dataIndex: ["productId", "sellingPrice", "value"],
+      key: "sellingPrice",
+      render: (text) => `${text} SUM`,
+    },
+    {
+      title: "Sotish sanasi",
+      dataIndex: "saleDate",
+      key: "saleDate",
+      render: (text) => moment(text).format("DD,MM,YYYY HH:mm"),
+    },
   ];
 
   if (isLoading) {

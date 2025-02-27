@@ -18,7 +18,8 @@ import Product from "../Product/Product";
 import Kassa from "../Kassa/Kassa";
 import Client from "../Client/Client";
 import Debtors from "../Debt/Debtors";
-import Sales from "../Sotuv-tarix/Sotuv";
+import { LuTicketPercent } from "react-icons/lu";
+import Promo from "../promo/Promo";
 
 const { Header, Sider, Content } = Layout;
 
@@ -44,8 +45,8 @@ export default function Home() {
         return <Client />;
       case "debtors":
         return <Debtors />;
-      case "sales":
-        return <Sales />;
+      case "promo":
+        return <Promo />;
       case "home":
       default:
         return <h1>Statistika</h1>;
@@ -84,8 +85,8 @@ export default function Home() {
           <Menu.Item key="debtors" icon={<CreditCardOutlined />}>
             Qarzdorlar
           </Menu.Item>
-          <Menu.Item key="sales" icon={<BarChartOutlined />}>
-            Sotilgan Mahsulotlar
+          <Menu.Item key="promo" icon={<LuTicketPercent />}>
+            Promokodlar
           </Menu.Item>
         </Menu>
       </Sider>

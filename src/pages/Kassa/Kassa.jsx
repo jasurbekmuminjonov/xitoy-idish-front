@@ -4,15 +4,17 @@ import {
   useGetClientsQuery,
   useCreateClientMutation,
 } from "../../context/service/client.service";
-import { Button, Input, Table, Modal, Select, Form, message } from "antd";
+import { Button, Input, Table, Modal, Select, Form, message, AutoComplete } from "antd";
 import "./kassa.css";
 import { MdDeleteForever } from "react-icons/md";
 import { useSellProductMutation } from "../../context/service/sales.service";
 import { useGetUsdRateQuery } from "../../context/service/usd.service";
 import { useCreateDebtMutation } from "../../context/service/debt.service";
+import { useGetPromosQuery } from "../../context/service/promo.service";
 
 const Kassa = () => {
   const { data: products = [] } = useGetProductsQuery();
+  const { data: promos = [] } = useGetPromosQuery();
   const { data: usdRate = [] } = useGetUsdRateQuery();
   const { data: clients = [] } = useGetClientsQuery();
   const [createClient] = useCreateClientMutation();
@@ -24,10 +26,12 @@ const Kassa = () => {
   const [basket, setBasket] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentDiscount, setPaymentDiscount] = useState(null);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [dueDate, setDueDate] = useState(null);
+  console.log(paymentDiscount);
 
   useEffect(() => {
     const result = products.filter(
@@ -192,6 +196,7 @@ const Kassa = () => {
               quantity: item.quantity,
               totalAmount: item.sellingPrice.value * item.quantity,
               paymentMethod,
+              discount: paymentDiscount,
               dueDate,
             }).unwrap()
           )
@@ -202,6 +207,7 @@ const Kassa = () => {
             sellProduct({
               clientId,
               productId: item._id,
+              discount: paymentDiscount,
               quantity: item.quantity,
               warehouseId: item.warehouse._id,
               paymentMethod,
@@ -275,9 +281,11 @@ const Kassa = () => {
         onOk={handleSell}
         onCancel={() => setIsModalVisible(false)}
       >
-        <Form>
+        <Form style={{ display: "flex", flexDirection: 'column', gap: "0px" }}>
+          <p style={{ margin: "0" }}>
+            To'lov usuli
+          </p>
           <Form.Item
-            label="To'lov usuli"
             rules={[{ required: true, message: "To'lov usulini tanlang" }]}
           >
             <Select
@@ -289,8 +297,22 @@ const Kassa = () => {
               <Select.Option value="credit">Qarz</Select.Option>
             </Select>
           </Form.Item>
+          <p style={{ margin: "0" }}>Promokod</p>
+          <Form.Item >
+            <Select
+              value={paymentDiscount}
+              onChange={(value) => setPaymentDiscount(value)}
+            >
+              <Select.Option value={0}>Promokodsiz</Select.Option>
+              {
+                promos.map((item) => (
+                  <Select.Option key={item._id} value={item.percent}>{item.code}</Select.Option>
+                ))
+              }
+            </Select>
+          </Form.Item>
+          <p style={{ margin: "0" }}>Mijoz ismi</p>
           <Form.Item
-            label="Mijoz ismi"
             rules={[{ required: true, message: "Mijoz ismini kiriting" }]}
           >
             <Input
@@ -300,8 +322,11 @@ const Kassa = () => {
               placeholder="Mijoz ismi"
             />
           </Form.Item>
+          <p style={{ margin: "0" }}>
+            Telefon raqami
+          </p>
           <Form.Item
-            label="Telefon raqami"
+
             rules={[{ required: true, message: "Telefon raqamini kiriting" }]}
           >
             <Input
@@ -311,8 +336,9 @@ const Kassa = () => {
               placeholder="Telefon raqami"
             />
           </Form.Item>
+          <p style={{ margin: "0" }}>Manzili</p>
           <Form.Item
-            label="Manzili"
+
             rules={[{ required: true, message: "Manzili kiriting" }]}
           >
             <Input
@@ -323,20 +349,22 @@ const Kassa = () => {
             />
           </Form.Item>
           {paymentMethod === "credit" && (
-            <Form.Item
-              label="Qarz muddati"
-              rules={[{ required: true, message: "Qarz muddatini kiriting" }]}
-            >
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </Form.Item>
+            <>
+              <p style={{ margin: "0" }}>Qarz muddati</p>
+              <Form.Item
+                rules={[{ required: true, message: "Qarz muddatini kiriting" }]}
+              >
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </Form.Item>
+            </>
           )}
         </Form>
       </Modal>
-    </div>
+    </div >
   );
 };
 
