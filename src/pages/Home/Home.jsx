@@ -8,13 +8,17 @@ import {
   AppstoreOutlined,
   ShoppingOutlined,
   DollarOutlined,
+  TeamOutlined,
+  CreditCardOutlined,
 } from "@ant-design/icons";
 import Admin from "../Adminlar/Adminlar";
 import Ombor from "../Ombor/Ombor";
 import Product from "../Product/Product";
 import Kassa from "../Kassa/Kassa";
-import Adminlar from "../Adminlar/Adminlar";
-// import "./Home.css";
+import Client from "../Client/Client";
+import Debtors from "../Debt/Debtors";
+import { LuTicketPercent } from "react-icons/lu";
+import Promo from "../promo/Promo";
 
 const { Header, Sider, Content } = Layout;
 
@@ -36,6 +40,12 @@ export default function Home() {
         return <Product />;
       case "kassa":
         return <Kassa />;
+      case "client":
+        return <Client />;
+      case "debtors":
+        return <Debtors />;
+      case "promo":
+        return <Promo />;
       case "home":
       default:
         return <h1>statistika</h1>;
@@ -68,6 +78,15 @@ export default function Home() {
           <Menu.Item key="kassa" icon={<DollarOutlined />}>
             Kassa
           </Menu.Item>
+          <Menu.Item key="client" icon={<TeamOutlined />}>
+            Clientlar
+          </Menu.Item>
+          <Menu.Item key="debtors" icon={<CreditCardOutlined />}>
+            Qarzdorlar
+          </Menu.Item>
+          <Menu.Item key="promo" icon={<LuTicketPercent />}>
+            Promokodlar
+          </Menu.Item>
         </Menu>
       </Sider>
       <Layout className="site-layout">
@@ -79,7 +98,6 @@ export default function Home() {
         <Content
           className="site-layout-background"
           style={{
-            // margin: "24px 16px",
             padding: 6,
             minHeight: 280,
           }}

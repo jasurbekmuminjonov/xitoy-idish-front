@@ -17,8 +17,18 @@ export const salesApi = apiSlice.injectEndpoints({
       }),
       providesTags: ["Sale"],
     }),
+    getClientHistory: builder.query({
+      query: (clientId) => ({
+        url: `/clients/${clientId}/history`,
+        method: "GET",
+      }),
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useSellProductMutation, useGetSalesHistoryQuery } = salesApi;
+export const {
+  useSellProductMutation,
+  useGetSalesHistoryQuery,
+  useGetClientHistoryQuery,
+} = salesApi;
