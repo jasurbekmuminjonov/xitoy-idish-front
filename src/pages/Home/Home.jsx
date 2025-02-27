@@ -10,6 +10,7 @@ import {
   DollarOutlined,
   TeamOutlined,
   CreditCardOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import Admin from "../Adminlar/Adminlar";
 import Ombor from "../Ombor/Ombor";
@@ -17,6 +18,7 @@ import Product from "../Product/Product";
 import Kassa from "../Kassa/Kassa";
 import Client from "../Client/Client";
 import Debtors from "../Debt/Debtors";
+import Sales from "../Sotuv-tarix/Sotuv";
 
 const { Header, Sider, Content } = Layout;
 
@@ -42,9 +44,11 @@ export default function Home() {
         return <Client />;
       case "debtors":
         return <Debtors />;
+      case "sales":
+        return <Sales />;
       case "home":
       default:
-        return <h1>statistika</h1>;
+        return <h1>Statistika</h1>;
     }
   };
 
@@ -79,6 +83,9 @@ export default function Home() {
           </Menu.Item>
           <Menu.Item key="debtors" icon={<CreditCardOutlined />}>
             Qarzdorlar
+          </Menu.Item>
+          <Menu.Item key="sales" icon={<BarChartOutlined />}>
+            Sotilgan Mahsulotlar
           </Menu.Item>
         </Menu>
       </Sider>
