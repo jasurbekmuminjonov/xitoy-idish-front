@@ -5,12 +5,11 @@ import { useGetProductsQuery } from '../../context/service/product.service';
 import { DatePicker } from 'antd';
 import moment from 'moment';
 import { useGetExpensesQuery } from '../../context/service/expense.service';
-import './hisobot.css'
 import SalesBarChart from './salesBarChart';
 import SalesLineChart from './salesLineChart';
 const { RangePicker } = DatePicker;
 
-const Hisobot = () => {
+const Statistika = () => {
     const { data: sales = [], isLoading: salesLoading } = useGetSalesHistoryQuery();
     const { data: debtors = [], isLoading: debtorsLoading } = useGetAllDebtorsQuery();
     const { data: products = [], isLoading: productsLoading } = useGetProductsQuery();
@@ -69,7 +68,7 @@ const Hisobot = () => {
             <div className="page_header">
                 <RangePicker placeholder={["Boshlash", "Tugash"]} onChange={handleDateChange} />
             </div>
-            <div className="hisobot_cards">
+            {/* <div className="hisobot_cards">
                 <div className="hisobot_card">
                     <b>
                         {filteredSales.reduce((total, b) => {
@@ -105,14 +104,13 @@ const Hisobot = () => {
                     </b>
                     <p>Umumiy harajat</p>
                 </div>
-            </div>
-            {/* <h1>Mahsulotlarni sotilishi</h1>
+            </div> */}
+            <h1>Mahsulotlarni sotilishi</h1>
             <SalesBarChart sales={filteredSales} debtors={filteredDebtors} products={filteredProducts} />
             <h1>Sotuvlar</h1>
-            <SalesLineChart sales={filteredSales} /> */}
-
+            <SalesLineChart sales={filteredSales} />
         </div>
     );
 };
 
-export default Hisobot;
+export default Statistika;
