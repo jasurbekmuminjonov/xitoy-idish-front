@@ -11,6 +11,7 @@ import {
   TeamOutlined,
   CreditCardOutlined,
   BarChartOutlined,
+  ExclamationCircleOutlined, // Brak mahsulotlar uchun yangi ikona
 } from "@ant-design/icons";
 import Admin from "../Adminlar/Adminlar";
 import Ombor from "../Ombor/Ombor";
@@ -18,6 +19,8 @@ import Product from "../Product/Product";
 import Kassa from "../Kassa/Kassa";
 import Client from "../Client/Client";
 import Debtors from "../Debt/Debtors";
+import Sales from "../Sotuv-tarix/Sotuv";
+import Brak from "../Brak/Brak"; // Brak sahifasini import qildik
 import { LuTicketPercent } from "react-icons/lu";
 import Promo from "../promo/Promo";
 
@@ -47,6 +50,10 @@ export default function Home() {
         return <Debtors />;
       case "promo":
         return <Promo />;
+      case "sales":
+        return <Sales />;
+      case "brak": // Brak sahifasini qo'shamiz
+        return <Brak />;
       case "home":
       default:
         return <h1>Statistika</h1>;
@@ -76,6 +83,9 @@ export default function Home() {
           <Menu.Item key="product" icon={<ShoppingOutlined />}>
             Mahsulotlar
           </Menu.Item>
+          <Menu.Item key="kassa" icon={<DollarOutlined />}>
+            Kassa
+          </Menu.Item>
           <Menu.Item key="client" icon={<TeamOutlined />}>
             Clientlar
           </Menu.Item>
@@ -84,6 +94,12 @@ export default function Home() {
           </Menu.Item>
           <Menu.Item key="promo" icon={<LuTicketPercent />}>
             Promokodlar
+          </Menu.Item>
+          <Menu.Item key="sales" icon={<BarChartOutlined />}>
+            Sotilgan Mahsulotlar
+          </Menu.Item>
+          <Menu.Item key="brak" icon={<ExclamationCircleOutlined />}> {/* Brak mahsulotlar uchun yangi ikona */}
+            Brak Mahsulotlar
           </Menu.Item>
         </Menu>
       </Sider>
