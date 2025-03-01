@@ -49,6 +49,7 @@ const Brak = () => {
             onSearch={(value) => setSearchTerm(value)}
             loading={isLoadingProducts}
             filterOption={false}
+            style={{ width: 400 }}
           >
             {products.map((product) => (
               <Option key={product._id} value={product._id}>
