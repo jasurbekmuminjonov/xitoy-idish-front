@@ -26,7 +26,7 @@ const Kassa = () => {
   const [basket, setBasket] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentDiscount, setPaymentDiscount] = useState(null);
+  const [paymentDiscount, setPaymentDiscount] = useState(0);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -195,7 +195,7 @@ const Kassa = () => {
               productId: item._id,
               quantity: item.quantity,
               totalAmount: item.sellingPrice.value * item.quantity,
-              sellingPrice: item.sellingPrice.value,
+              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100),
               paymentMethod,
               discount: paymentDiscount,
               dueDate,
@@ -210,7 +210,7 @@ const Kassa = () => {
               productId: item._id,
               discount: paymentDiscount,
               quantity: item.quantity,
-              sellingPrice: item.sellingPrice.value,
+              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100),
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()

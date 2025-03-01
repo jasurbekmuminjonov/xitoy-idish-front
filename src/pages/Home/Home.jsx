@@ -23,6 +23,7 @@ import Sales from "../Sotuv-tarix/Sotuv";
 import Brak from "../Brak/Brak"; // Brak sahifasini import qildik
 import { LuTicketPercent } from "react-icons/lu";
 import Promo from "../promo/Promo";
+import Hisobot from "../hisobot/hisobot";
 
 const { Header, Sider, Content } = Layout;
 
@@ -56,7 +57,7 @@ export default function Home() {
         return <Brak />;
       case "home":
       default:
-        return <h1>Statistika</h1>;
+        return <Hisobot />;
     }
   };
 
@@ -72,7 +73,7 @@ export default function Home() {
           onClick={(e) => setSelectedPage(e.key)}
         >
           <Menu.Item key="home" icon={<HomeOutlined />}>
-            Home
+            Bosh sahifa
           </Menu.Item>
           <Menu.Item key="admin" icon={<UserOutlined />}>
             Adminlar
