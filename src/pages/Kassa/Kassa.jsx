@@ -11,6 +11,7 @@ import { useSellProductMutation } from "../../context/service/sales.service";
 import { useGetUsdRateQuery } from "../../context/service/usd.service";
 import { useCreateDebtMutation } from "../../context/service/debt.service";
 import { useGetPromosQuery } from "../../context/service/promo.service";
+import { useNavigate } from "react-router-dom";
 
 const Kassa = () => {
   const { data: products = [] } = useGetProductsQuery();
@@ -19,6 +20,7 @@ const Kassa = () => {
   const { data: clients = [] } = useGetClientsQuery();
   const [createClient] = useCreateClientMutation();
   const [createDebt] = useCreateDebtMutation();
+  const navigate = useNavigate()
   const [sellProduct] = useSellProductMutation();
   const [selectedClient, setSelectedClient] = useState("")
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -236,6 +238,7 @@ const Kassa = () => {
     <div className="page" style={{ marginTop: "8px", paddingInline: "4px" }}>
       <div className="products">
         <div className="products_header">
+
           <input
             autoFocus
             type="search"
@@ -243,6 +246,9 @@ const Kassa = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+          <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => navigate("/debtors")}>
+            Qarzdorlar
+          </Button>
         </div>
         <Table
           size="small"

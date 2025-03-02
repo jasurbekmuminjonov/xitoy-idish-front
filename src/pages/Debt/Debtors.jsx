@@ -6,15 +6,19 @@ import {
 } from "../../context/service/debt.service";
 import { EyeOutlined } from "@ant-design/icons";
 import moment from "moment";
+import { FaChevronLeft } from "react-icons/fa6";
+import { useNavigate } from "react-router-dom";
 
 const Debtors = () => {
   const { data: debtors = [] } = useGetAllDebtorsQuery();
   const [payDebt] = usePayDebtMutation();
+  const role = localStorage.getItem("role");
+  const navigate = useNavigate()
   const [selectedDebtor, setSelectedDebtor] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
-
+  console.log("hello");
   const handlePayDebt = async (debtId) => {
     try {
       await payDebt({ id: debtId, amount: paymentAmount }).unwrap();
@@ -24,7 +28,6 @@ const Debtors = () => {
       message.error("Qarz to'lashda xatolik yuz berdi");
     }
   };
-
   const debtorsColumn = [
     {
       title: "Mijoz ismi",
@@ -91,8 +94,18 @@ const Debtors = () => {
   ];
 
   return (
-    <div>
-      <h1>Qarzdorlar</h1>
+    <div className="page">
+      <div className="page_header" style={{ display: "flex", alignItems: "center", gap: "12px", color: "#fff", height: "40px", marginTop: "10px" }}>
+
+        <h1>Qarzdorlar</h1>
+        {
+          role !== "admin" && (
+            <Button onClick={() => navigate("/")} type="primary">
+              <FaChevronLeft />
+            </Button>
+          )
+        }
+      </div>
       <Table columns={debtorsColumn} dataSource={debtors} rowKey="_id" />
       <Modal
         title="Qarz to'lash"

@@ -62,7 +62,7 @@ export default function Home() {
         return <Sales />;
       case "brak":
         return <Brak />;
-      case "expense": // Rasxod sahifasini qo'shamiz
+      case "expense":
         return <Expense />;
       case "home":
       default:

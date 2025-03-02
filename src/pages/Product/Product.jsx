@@ -4,6 +4,7 @@ import {
   useAddProductMutation,
   useDeleteProductMutation,
   useGetProductsQuery,
+  useUpdateProductMutation,
 } from "../../context/service/product.service";
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
 import { MdEdit } from "react-icons/md";
@@ -11,7 +12,6 @@ import { MdDeleteForever } from "react-icons/md";
 
 const { Option } = Select;
 
-// 6 xonali noyob barcode generatsiya qilish uchun funksiya
 const generateBarcode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -19,6 +19,8 @@ const generateBarcode = () => {
 export default function Product() {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editProduct] = useUpdateProductMutation()
+  const [editingProduct, setEditingProduct] = useState('')
   const { data: products = [], isLoading: productsLoading } =
     useGetProductsQuery();
   const { data: warehouses = [], isLoading: warehousesLoading } =
@@ -29,7 +31,7 @@ export default function Product() {
 
   const handleAddProduct = () => {
     setModalVisible(true);
-    form.setFieldsValue({ barcode: generateBarcode() }); // Barcode ni avtomatik ravishda generatsiya qilish
+    form.setFieldsValue({ barcode: generateBarcode() });
   };
 
   const handleCancel = () => {
@@ -39,8 +41,16 @@ export default function Product() {
 
   const onFinish = async (values) => {
     try {
-      await addProduct(values).unwrap();
+      if (editingProduct) {
+        await editProduct({
+          id: editingProduct,
+          data: values
+        })
+      } else {
+        await addProduct(values).unwrap();
+      }
       form.resetFields();
+      setEditingProduct("")
       setModalVisible(false);
       message.success("Product added successfully");
     } catch (error) {
@@ -56,12 +66,12 @@ export default function Product() {
 
   const columns = [
     {
-      title: "Name",
+      title: "Tovar nomi",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Unit",
+      title: "Birlik",
       dataIndex: "unit",
       key: "unit",
     },
@@ -76,39 +86,43 @@ export default function Product() {
       key: "currency",
     },
     {
-      title: "Purchase Price",
+      title: "Tan narxi",
       dataIndex: "purchasePrice",
       key: "purchasePrice",
       render: (text, record) =>
         `${record.purchasePrice.value}`,
     },
     {
-      title: "Selling Price",
+      title: "Sotish narxi",
       dataIndex: "sellingPrice",
       key: "sellingPrice",
       render: (text, record) =>
         `${record.sellingPrice.value}`,
     },
     {
-      title: "Warehouse",
+      title: "Ombor",
       dataIndex: "warehouse",
       key: "warehouse",
       render: (text, record) => record?.warehouse?.name,
     },
     {
-      title: "Barcode",
+      title: "Shtrix kod",
       dataIndex: "barcode",
       key: "barcode",
     },
     {
-      title: "Category",
+      title: "Kategoriya",
       dataIndex: "category",
       key: "category",
     },
     {
       title: "Amallar", render: (_, record) => (
         <div className="table_actions">
-          <Button type="primary" onClick={() => console.log(record)}>
+          <Button type="primary" onClick={() => {
+            setEditingProduct(record._id)
+            form.setFieldsValue({ ...record, barcode: record.barcode });
+            setModalVisible(true);
+          }}>
             <MdEdit />
           </Button>
           <Popconfirm title="Mahsulotni o'chirmoqchimisiz" onCancel={() => { }} onConfirm={() => deleteProduct(record._id)} okText="O'chirish" cancelText="Orqaga" >
@@ -128,7 +142,7 @@ export default function Product() {
         onClick={handleAddProduct}
         style={{ marginBottom: 16 }}
       >
-        Add Product
+        Tovar qo'shish
       </Button>
       <Table
         columns={columns}
@@ -224,7 +238,7 @@ export default function Product() {
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              Add Product
+              Tovar qo'shish
             </Button>
           </Form.Item>
         </Form>
