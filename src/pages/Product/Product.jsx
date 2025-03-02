@@ -1,13 +1,23 @@
-import React, { useState } from "react";
-import { Table, Button, Form, Input, Select, Modal, message, Popconfirm } from "antd";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Table,
+  Button,
+  Form,
+  Input,
+  Select,
+  Modal,
+  message,
+  Popconfirm,
+} from "antd";
+import { useReactToPrint } from "react-to-print";
+import Barcode from "react-barcode";
 import {
   useAddProductMutation,
   useDeleteProductMutation,
   useGetProductsQuery,
 } from "../../context/service/product.service";
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
-import { MdEdit } from "react-icons/md";
-import { MdDeleteForever } from "react-icons/md";
+import { MdEdit, MdDeleteForever, MdPrint } from "react-icons/md";
 
 const { Option } = Select;
 
@@ -16,7 +26,13 @@ const generateBarcode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-export default function Product() {
+const BarcodePrint = React.forwardRef(({ barcode }, ref) => (
+  <div ref={ref} style={{ width: "4cm", height: "3cm" }}>
+    <Barcode value={barcode} width={2} height={60} fontSize={12} />
+  </div>
+));
+
+const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const { data: products = [], isLoading: productsLoading } =
@@ -25,11 +41,20 @@ export default function Product() {
     useGetWarehousesQuery();
   const [addProduct] = useAddProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
-  console.log(products);
+  const [currentBarcode, setCurrentBarcode] = useState("");
+  const printRef = useRef();
+
+  useEffect(() => {
+    if (currentBarcode) {
+      handlePrint();
+    }
+  }, [currentBarcode]);
 
   const handleAddProduct = () => {
+    const newBarcode = generateBarcode();
+    setCurrentBarcode(newBarcode);
     setModalVisible(true);
-    form.setFieldsValue({ barcode: generateBarcode() }); // Barcode ni avtomatik ravishda generatsiya qilish
+    form.setFieldsValue({ barcode: newBarcode }); // Barcode ni avtomatik ravishda generatsiya qilish
   };
 
   const handleCancel = () => {
@@ -53,6 +78,11 @@ export default function Product() {
       }
     }
   };
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    onAfterPrint: () => setCurrentBarcode(""), // Clear barcode after printing
+  });
 
   const columns = [
     {
@@ -79,15 +109,13 @@ export default function Product() {
       title: "Purchase Price",
       dataIndex: "purchasePrice",
       key: "purchasePrice",
-      render: (text, record) =>
-        `${record.purchasePrice.value}`,
+      render: (text, record) => `${record.purchasePrice.value}`,
     },
     {
       title: "Selling Price",
       dataIndex: "sellingPrice",
       key: "sellingPrice",
-      render: (text, record) =>
-        `${record.sellingPrice.value}`,
+      render: (text, record) => `${record.sellingPrice.value}`,
     },
     {
       title: "Warehouse",
@@ -106,19 +134,32 @@ export default function Product() {
       key: "category",
     },
     {
-      title: "Amallar", render: (_, record) => (
+      title: "Amallar",
+      render: (_, record) => (
         <div className="table_actions">
           <Button type="primary" onClick={() => console.log(record)}>
             <MdEdit />
           </Button>
-          <Popconfirm title="Mahsulotni o'chirmoqchimisiz" onCancel={() => { }} onConfirm={() => deleteProduct(record._id)} okText="O'chirish" cancelText="Orqaga" >
+          <Popconfirm
+            title="Mahsulotni o'chirmoqchimisiz"
+            onCancel={() => {}}
+            onConfirm={() => deleteProduct(record._id)}
+            okText="O'chirish"
+            cancelText="Orqaga"
+          >
             <Button type="primary">
               <MdDeleteForever />
             </Button>
           </Popconfirm>
+          <Button
+            type="primary"
+            onClick={() => setCurrentBarcode(record.barcode)}
+          >
+            <MdPrint />
+          </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -180,10 +221,8 @@ export default function Product() {
             <Input placeholder="Selling Price" />
           </Form.Item>
           <Form.Item
-            name={["quantity"]}
-            rules={[
-              { required: true, message: "Tovar sonini kiriting" },
-            ]}
+            name="quantity"
+            rules={[{ required: true, message: "Tovar sonini kiriting" }]}
           >
             <Input placeholder="Soni" />
           </Form.Item>
@@ -216,10 +255,7 @@ export default function Product() {
           >
             <Input placeholder="Category" />
           </Form.Item>
-          <Form.Item
-            name="barcode"
-            hidden
-          >
+          <Form.Item name="barcode" hidden>
             <Input />
           </Form.Item>
           <Form.Item>
@@ -229,6 +265,12 @@ export default function Product() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <div style={{ display: "none" }}>
+        <BarcodePrint ref={printRef} barcode={currentBarcode} />
+      </div>
     </div>
   );
-}
+};
+
+export default Product;
