@@ -15,13 +15,13 @@ import {
   useAddProductMutation,
   useDeleteProductMutation,
   useGetProductsQuery,
+  useUpdateProductMutation,
 } from "../../context/service/product.service";
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
 import { MdEdit, MdDeleteForever, MdPrint } from "react-icons/md";
 
 const { Option } = Select;
 
-// 6 xonali noyob barcode generatsiya qilish uchun funksiya
 const generateBarcode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -35,6 +35,8 @@ const BarcodePrint = React.forwardRef(({ barcode }, ref) => (
 const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editProduct] = useUpdateProductMutation()
+  const [editingProduct, setEditingProduct] = useState('')
   const { data: products = [], isLoading: productsLoading } =
     useGetProductsQuery();
   const { data: warehouses = [], isLoading: warehousesLoading } =
@@ -54,7 +56,7 @@ const Product = () => {
     const newBarcode = generateBarcode();
     setCurrentBarcode(newBarcode);
     setModalVisible(true);
-    form.setFieldsValue({ barcode: newBarcode }); // Barcode ni avtomatik ravishda generatsiya qilish
+    form.setFieldsValue({ barcode: generateBarcode() });
   };
 
   const handleCancel = () => {
@@ -64,8 +66,16 @@ const Product = () => {
 
   const onFinish = async (values) => {
     try {
-      await addProduct(values).unwrap();
+      if (editingProduct) {
+        await editProduct({
+          id: editingProduct,
+          data: values
+        })
+      } else {
+        await addProduct(values).unwrap();
+      }
       form.resetFields();
+      setEditingProduct("")
       setModalVisible(false);
       message.success("Product added successfully");
     } catch (error) {
@@ -86,12 +96,12 @@ const Product = () => {
 
   const columns = [
     {
-      title: "Name",
+      title: "Tovar nomi",
       dataIndex: "name",
       key: "name",
     },
     {
-      title: "Unit",
+      title: "Birlik",
       dataIndex: "unit",
       key: "unit",
     },
@@ -106,30 +116,30 @@ const Product = () => {
       key: "currency",
     },
     {
-      title: "Purchase Price",
+      title: "Tan narxi",
       dataIndex: "purchasePrice",
       key: "purchasePrice",
       render: (text, record) => `${record.purchasePrice.value}`,
     },
     {
-      title: "Selling Price",
+      title: "Sotish narxi",
       dataIndex: "sellingPrice",
       key: "sellingPrice",
       render: (text, record) => `${record.sellingPrice.value}`,
     },
     {
-      title: "Warehouse",
+      title: "Ombor",
       dataIndex: "warehouse",
       key: "warehouse",
       render: (text, record) => record?.warehouse?.name,
     },
     {
-      title: "Barcode",
+      title: "Shtrix kod",
       dataIndex: "barcode",
       key: "barcode",
     },
     {
-      title: "Category",
+      title: "Kategoriya",
       dataIndex: "category",
       key: "category",
     },
@@ -137,7 +147,11 @@ const Product = () => {
       title: "Amallar",
       render: (_, record) => (
         <div className="table_actions">
-          <Button type="primary" onClick={() => console.log(record)}>
+          <Button type="primary" onClick={() => {
+            setEditingProduct(record._id)
+            form.setFieldsValue({ ...record, barcode: record.barcode });
+            setModalVisible(true);
+          }}>
             <MdEdit />
           </Button>
           <Popconfirm
@@ -169,7 +183,7 @@ const Product = () => {
         onClick={handleAddProduct}
         style={{ marginBottom: 16 }}
       >
-        Add Product
+        Tovar qo'shish
       </Button>
       <Table
         columns={columns}
@@ -260,7 +274,7 @@ const Product = () => {
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              Add Product
+              Tovar qo'shish
             </Button>
           </Form.Item>
         </Form>

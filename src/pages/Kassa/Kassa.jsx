@@ -11,6 +11,7 @@ import { useSellProductMutation } from "../../context/service/sales.service";
 import { useGetUsdRateQuery } from "../../context/service/usd.service";
 import { useCreateDebtMutation } from "../../context/service/debt.service";
 import { useGetPromosQuery } from "../../context/service/promo.service";
+import { useNavigate } from "react-router-dom";
 
 const Kassa = () => {
   const { data: products = [] } = useGetProductsQuery();
@@ -19,6 +20,7 @@ const Kassa = () => {
   const { data: clients = [] } = useGetClientsQuery();
   const [createClient] = useCreateClientMutation();
   const [createDebt] = useCreateDebtMutation();
+  const navigate = useNavigate()
   const [sellProduct] = useSellProductMutation();
   const [selectedClient, setSelectedClient] = useState("")
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -26,7 +28,7 @@ const Kassa = () => {
   const [basket, setBasket] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentDiscount, setPaymentDiscount] = useState(null);
+  const [paymentDiscount, setPaymentDiscount] = useState(0);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -195,7 +197,7 @@ const Kassa = () => {
               productId: item._id,
               quantity: item.quantity,
               totalAmount: item.sellingPrice.value * item.quantity,
-              sellingPrice: item.sellingPrice.value,
+              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100),
               paymentMethod,
               discount: paymentDiscount,
               dueDate,
@@ -210,7 +212,7 @@ const Kassa = () => {
               productId: item._id,
               discount: paymentDiscount,
               quantity: item.quantity,
-              sellingPrice: item.sellingPrice.value,
+              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100),
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()
@@ -236,6 +238,7 @@ const Kassa = () => {
     <div className="page" style={{ marginTop: "8px", paddingInline: "4px" }}>
       <div className="products">
         <div className="products_header">
+
           <input
             autoFocus
             type="search"
@@ -243,6 +246,9 @@ const Kassa = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+          <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => navigate("/debtors")}>
+            Qarzdorlar
+          </Button>
         </div>
         <Table
           size="small"

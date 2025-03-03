@@ -18,13 +18,17 @@ import Admin from "../Adminlar/Adminlar";
 import Ombor from "../Ombor/Ombor";
 import Product from "../Product/Product";
 import Kassa from "../Kassa/Kassa";
+import { FaChartLine } from "react-icons/fa6";
+
 import Client from "../Client/Client";
 import Debtors from "../Debt/Debtors";
 import Sales from "../Sotuv-tarix/Sotuv";
 import Brak from "../Brak/Brak";
-import Expense from "../Rasxod/Expense"; // Rasxod sahifasini import qildik
+import Expense from "../Rasxod/Expense";
 import { LuTicketPercent } from "react-icons/lu";
 import Promo from "../promo/Promo";
+import Hisobot from "../hisobot/hisobot";
+import Statistika from "../statistika/statistika";
 
 const { Header, Sider, Content } = Layout;
 
@@ -40,6 +44,8 @@ export default function Home() {
     switch (selectedPage) {
       case "admin":
         return <Admin />;
+      case "statistika":
+        return <Statistika />;
       case "ombor":
         return <Ombor />;
       case "product":
@@ -56,11 +62,11 @@ export default function Home() {
         return <Sales />;
       case "brak":
         return <Brak />;
-      case "expense": // Rasxod sahifasini qo'shamiz
+      case "expense":
         return <Expense />;
       case "home":
       default:
-        return <h1>Statistika</h1>;
+        return <Hisobot />;
     }
   };
 
@@ -76,7 +82,10 @@ export default function Home() {
           onClick={(e) => setSelectedPage(e.key)}
         >
           <Menu.Item key="home" icon={<HomeOutlined />}>
-            Home
+            Bosh sahifa
+          </Menu.Item>
+          <Menu.Item key="statistika" icon={<FaChartLine />}>
+            Statistika
           </Menu.Item>
           <Menu.Item key="admin" icon={<UserOutlined />}>
             Adminlar
