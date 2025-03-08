@@ -18,9 +18,9 @@ const CustomTooltip = ({ active, payload }) => {
     return null;
 };
 const SalesLineChart = ({ sales }) => {
-    const formattedData = sales.map(sale => ({
+    const formattedData = sales?.map(sale => ({
         date: new Date(sale.createdAt).toLocaleDateString(),
-        revenue: (sale.quantity * sale.sellingPrice) - (sale.quantity * sale.productId.purchasePrice.value),
+        revenue: (sale.quantity * sale.sellingPrice) - (sale?.quantity * sale?.productId?.purchasePrice?.value),
     })).reverse();
 
     return (

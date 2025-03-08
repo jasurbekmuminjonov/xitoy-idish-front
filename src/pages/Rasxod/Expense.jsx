@@ -5,13 +5,14 @@ import {
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,
 } from "../../context/service/expense.service";
-import { Table, Button, Modal, Form, Input, Select } from "antd";
+import { Table, Button, Modal, Form, Input, Select, DatePicker } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
+import moment from "moment";
 
 const { Option } = Select;
 const { confirm } = Modal;
@@ -29,7 +30,8 @@ const Expense = () => {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [categoryForm] = Form.useForm();
-
+  const [filteredExpenses, setFilteredExpenses] = useState([])
+  const [filters, setFilters] = useState({ category: null, dateRange: [] });
   useEffect(() => {
     const uniqueCategories = [
       ...new Set(expenses.map((expense) => expense.category)),
@@ -38,7 +40,7 @@ const Expense = () => {
   }, [expenses]);
 
   const columns = [
-    { title: "Sana", dataIndex: "date", key: "date" },
+    { title: "Sana", dataIndex: "date", render: (text) => moment(text).format("DD.MM.YYYY HH:mm"), key: "date" },
     { title: "Miqdor", dataIndex: "amount", key: "amount" },
     { title: "Kategoriya", dataIndex: "category", key: "category" },
     { title: "Tavsif", dataIndex: "description", key: "description" },
@@ -47,7 +49,7 @@ const Expense = () => {
       title: "Harakatlar",
       key: "actions",
       render: (text, record) => (
-        <>
+        <div className="table_actions">
           <Button
             icon={<EditOutlined />}
             onClick={() => showEditModal(record)}
@@ -56,7 +58,7 @@ const Expense = () => {
             icon={<DeleteOutlined />}
             onClick={() => showDeleteConfirm(record._id)}
           />
-        </>
+        </div>
       ),
     },
   ];
@@ -128,15 +130,55 @@ const Expense = () => {
     categoryForm.resetFields();
   };
 
+  const handleCategoryFilterChange = (value) => {
+    setFilters((prev) => ({ ...prev, category: value }));
+  };
+
+  const handleDateFilterChange = (dates, dateStrings) => {
+    if (!dates || dateStrings[0] === "" || dateStrings[1] === "") {
+      setFilters((prev) => ({ ...prev, dateRange: [] }));
+    } else {
+      setFilters((prev) => ({ ...prev, dateRange: dates }));
+    }
+  };
+  ;
+  useEffect(() => {
+    setFilteredExpenses(expenses.filter((expense) => {
+      const isCategoryMatch = filters.category ? expense.category === filters.category : true;
+      const isDateMatch =
+        !filters.dateRange.length ||
+        (moment(expense.date).isSameOrAfter(moment(filters.dateRange[0]), "day") &&
+          moment(expense.date).isSameOrBefore(moment(filters.dateRange[1]), "day"));
+
+      return isCategoryMatch && isDateMatch;
+    }))
+  }, [filters, expenses])
   return (
     <div className="expense-page">
-      <h1>Rasxodlar</h1>
+      <div className="page_header">
+        <h1>Rasxodlar</h1>
+        <div className="header_actions">
+
+          <Select
+            placeholder="Kategoriya tanlang"
+            allowClear
+            onChange={handleCategoryFilterChange}
+            style={{ width: 200 }}
+          >
+            <Select.Option value="">Barchasi</Select.Option>
+            {categories.map((category, index) => (
+              <Option key={index} value={category}>{category}</Option>
+            ))}
+          </Select>
+          <DatePicker.RangePicker placeholder={["Boshlash", "Tugash"]} onChange={handleDateFilterChange} />
+        </div>
+      </div>
       <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
         Rasxod qo'shish
       </Button>
       <Table
         columns={columns}
-        dataSource={expenses}
+        dataSource={filteredExpenses}
         rowKey="_id"
         loading={isLoading}
       />

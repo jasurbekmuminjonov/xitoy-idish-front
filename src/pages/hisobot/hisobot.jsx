@@ -83,7 +83,7 @@ const Hisobot = () => {
                     <p>Sotuvning sof daromadi</p>
                 </div>
                 <div className="hisobot_card">
-                    <b>{filteredProducts.reduce((total, item) => total + item.quantity * item.purchasePrice.value, 0).toLocaleString() + " so'm"}</b>
+                    <b>{filteredProducts.reduce((total, item) => total + item.quantity * item.purchasePrice?.value, 0).toLocaleString() + " so'm"}</b>
                     <p>Umumiy mahsulotlar tan narxi</p>
                 </div>
                 <div className="hisobot_card">

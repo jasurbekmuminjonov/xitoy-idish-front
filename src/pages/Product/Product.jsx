@@ -106,6 +106,16 @@ const Product = () => {
       key: "unit",
     },
     {
+      title: "Kod",
+      dataIndex: "code",
+      key: "code",
+    },
+    {
+      title: "O'lcham",
+      dataIndex: "size",
+      key: "size",
+    },
+    {
       title: "Miqdori",
       dataIndex: "quantity",
       key: "quantity",
@@ -119,13 +129,13 @@ const Product = () => {
       title: "Tan narxi",
       dataIndex: "purchasePrice",
       key: "purchasePrice",
-      render: (text, record) => `${record.purchasePrice.value}`,
+      render: (text, record) => `${record.purchasePrice?.value}`,
     },
     {
       title: "Sotish narxi",
       dataIndex: "sellingPrice",
       key: "sellingPrice",
-      render: (text, record) => `${record.sellingPrice.value}`,
+      render: (text, record) => `${record.sellingPrice?.value}`,
     },
     {
       title: "Ombor",
@@ -156,7 +166,7 @@ const Product = () => {
           </Button>
           <Popconfirm
             title="Mahsulotni o'chirmoqchimisiz"
-            onCancel={() => {}}
+            onCancel={() => { }}
             onConfirm={() => deleteProduct(record._id)}
             okText="O'chirish"
             cancelText="Orqaga"
@@ -175,16 +185,33 @@ const Product = () => {
       ),
     },
   ];
+  console.log(products.filter((p) => p.currency === "SUM").reduce((acc, product) => acc + product.quantity * product.purchasePrice.value, 0));
 
   return (
     <div>
-      <Button
-        type="primary"
-        onClick={handleAddProduct}
-        style={{ marginBottom: 16 }}
-      >
-        Tovar qo'shish
-      </Button>
+      <div className="page_header">
+        <Button
+          type="primary"
+          onClick={handleAddProduct}
+          style={{ marginBottom: 16 }}
+        >
+          Tovar qo'shish
+        </Button>
+        <div className="stats">
+
+          <p>Umumiy tovar soni: {products.reduce((a, b) => a + b.quantity, 0)}</p>
+          <p>
+            Umumiy tovar tan narxi (sum):{" "}
+            {products.filter((p) => p.currency === "SUM").reduce((acc, product) => acc + product.quantity * product.purchasePrice.value, 0).toLocaleString()} so'm
+          </p>
+          <p>
+            Umumiy tovar tan narxi ($):{" "}
+            {products.filter((p) => p.currency === "USD").reduce((acc, product) => acc + product.quantity * product.purchasePrice.value, 0).toLocaleString()}$
+          </p>
+        </div>
+
+      </div>
+
       <Table
         columns={columns}
         dataSource={products}
@@ -219,18 +246,26 @@ const Product = () => {
             </Select>
           </Form.Item>
           <Form.Item
+            name="size"
+            rules={[{ required: true, message: "O'lchamni kiriting" }]}
+          >
+            <Input placeholder="O'lcham" type="number" />
+          </Form.Item>
+          <Form.Item
+            name="code"
+            rules={[{ required: true, message: "Mahsulot kodini kiriting" }]}
+          >
+            <Input placeholder="Kod" type="text" />
+          </Form.Item>
+          <Form.Item
             name={["purchasePrice", "value"]}
-            rules={[
-              { required: true, message: "Please input the purchase price!" },
-            ]}
+
           >
             <Input placeholder="Purchase Price" />
           </Form.Item>
           <Form.Item
             name={["sellingPrice", "value"]}
-            rules={[
-              { required: true, message: "Please input the selling price!" },
-            ]}
+
           >
             <Input placeholder="Selling Price" />
           </Form.Item>
@@ -242,9 +277,9 @@ const Product = () => {
           </Form.Item>
           <Form.Item
             name="currency"
-            rules={[{ required: true, message: "Please select the currency!" }]}
           >
             <Select placeholder="Select Currency">
+              <Option value="">Keyin kiritish</Option>
               <Option value="USD">USD</Option>
               <Option value="SUM">SUM</Option>
             </Select>

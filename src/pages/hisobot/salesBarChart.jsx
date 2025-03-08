@@ -22,10 +22,10 @@ const CustomTooltip = ({ active, payload }) => {
 const SalesBarChart = ({ sales, debtors, products }) => {
     const salesData = products.map((product) => {
         const totalSold = sales
-            .filter((sale) => sale.productId._id === product._id)
+            .filter((sale) => sale.productId?._id === product?._id)
             .reduce((sum, sale) => sum + sale.quantity, 0);
         const totalDebt = debtors
-            .filter((sale) => sale.productId._id === product._id)
+            .filter((sale) => sale.productId?._id === product?._id)
             .reduce((sum, sale) => sum + sale.quantity, 0);
         return {
             name: product.name,

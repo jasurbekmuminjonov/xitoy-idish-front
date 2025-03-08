@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Modal, message } from "antd";
+import { Table, Button, Modal, message, Popover, Tooltip } from "antd";
 import { UserOutlined, EyeOutlined, DollarOutlined } from "@ant-design/icons";
 import {
   useGetClientsQuery,
@@ -15,23 +15,21 @@ const Client = () => {
   const { data: clients = [] } = useGetClientsQuery();
   const [selectedClient, setSelectedClient] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDebtModalVisible, setIsDebtModalVisible] = useState(false);
   const { data: clientHistory = [] } = useGetClientHistoryQuery(
     selectedClient?._id,
-    {
-      skip: !selectedClient,
-    }
+    { skip: !selectedClient }
   );
   const { data: debts = [] } = useGetDebtsByClientQuery(selectedClient?._id, {
     skip: !selectedClient,
   });
   const [payDebt] = usePayDebtMutation();
 
-  const handlePayDebt = async (debtId) => {
+  const handlePayDebt = async (debtId, amount, currency) => {
     try {
       await payDebt({
         id: debtId,
-        amount: debts.find((debt) => debt._id === debtId).remainingAmount,
+        amount: amount,
+        currency
       }).unwrap();
       message.success("Qarz muvaffaqiyatli to'landi");
     } catch (error) {
@@ -55,118 +53,130 @@ const Client = () => {
     { title: "Manzil", dataIndex: "address", key: "address" },
     {
       title: "Amallar",
-      render: (_, record) => {
-        const hasPendingDebts = debts.some(
-          (debt) => debt.clientId === record._id && debt.status === "pending"
-        );
-
-        return (
-          <div>
-            <Button
-              onClick={() => {
-                setSelectedClient(record);
-                setIsModalVisible(true);
-              }}
-            >
-              <EyeOutlined /> Ko'rish
-            </Button>
-            <Button
-              style={{
-                marginLeft: 8,
-                backgroundColor: hasPendingDebts ? "red" : "",
-              }}
-              onClick={() => {
-                setSelectedClient(record);
-                setIsDebtModalVisible(true);
-              }}
-            >
-              <DollarOutlined /> Qarzlar
-            </Button>
-          </div>
-        );
-      },
+      render: (_, record) => (
+        <Button
+          onClick={() => {
+            setSelectedClient(record);
+            setIsModalVisible(true);
+          }}
+        >
+          <EyeOutlined /> Ko'rish
+        </Button>
+      ),
     },
   ];
 
-  const historyColumns = [
-    {
-      title: "Tovar nomi",
-      dataIndex: ["productId", "name"],
-      key: "productId.name",
-    },
-    {
-      title: "Ombor",
-      dataIndex: ["warehouseId", "name"],
-      key: "warehouseId.name",
-    },
-    { title: "Soni", dataIndex: "quantity", key: "quantity" },
-    {
-      title: "Sotish narxi",
-      dataIndex: ["productId", "sellingPrice", "value"],
-      key: "productId.sellingPrice.value",
-    },
-    { title: "To'lov usuli", dataIndex: "paymentMethod", key: "paymentMethod" },
-    { title: "Sotish sanasi", dataIndex: "saleDate", key: "saleDate" },
-  ];
+  const combinedData = [
+    ...clientHistory?.map((sale) => ({ ...sale, type: "sale" })) || [],
+    ...debts?.map((debt) => ({ ...debt, type: "debt" })) || [],
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  console.log(JSON.stringify(combinedData, null, 2));
 
-  const debtColumns = [
-    {
-      title: "Tovar nomi",
-      dataIndex: ["productId", "name"],
-      key: "productId.name",
-    },
+
+  const historyAndDebtColumns = [
+    { title: "Tovar nomi", dataIndex: ["productId", "name"], key: "productId.name" },
     { title: "Soni", dataIndex: "quantity", key: "quantity" },
-    { title: "Umumiy summa", dataIndex: "totalAmount", key: "totalAmount" },
     {
-      title: "Qoldiq summa",
-      dataIndex: "remainingAmount",
-      key: "remainingAmount",
+      title: "Sotish narxi", dataIndex: "sellingPrice", key: "sellingPrice"
     },
-    { title: "Qarz muddati", dataIndex: "dueDate", render: (text) => moment(text).format("DD.MM.YYYY"), key: "dueDate" },
+    {
+      title: "Valyuta", dataIndex: "currency", key: "currency"
+    },
+    {
+      title: "Chegirma(%)", dataIndex: "discount", key: "discount"
+    },
+    {
+      title: "Umumiy summa", key: "total", render: (_, record) => {
+        return record.sellingPrice * record.quantity
+      }
+    },
+    {
+      title: "Qoldiq qarz", dataIndex: "remainingAmount", key: "amount"
+    },
     {
       title: "Holati",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (status === "paid" ? "To'langan" : "To'lanmagan"),
+      dataIndex: "type",
+      key: "type",
+      render: (_, record) => (record.type === "debt" ? (record.status === "paid" ? "To'langan" : "To'lanmagan") : "Sotilgan"),
     },
+    { title: "Sana", dataIndex: "createdAt", key: "createdAt", render: (text) => moment(text).format("DD.MM.YYYY") },
     {
       title: "Amallar",
-      render: (_, record) =>
-        record.status === "pending" && (
-          <Button type="primary" onClick={() => handlePayDebt(record._id)}>
-            To'lash
-          </Button>
-        ),
-    },
-  ];
+      render: (_, record) => (
+        record.type === "debt" && (
+          <div className="table_actions">
+            {
+              record.status === "pending" && (
+                <Tooltip
+                  title={
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const amount = Number(e.target[0].value);
+                      const currency = e.target[1].value;
+                      console.log(currency);
+
+                      handlePayDebt(record._id, amount, currency);
+                    }} className="modal_form">
+                      <input
+                        type="number"
+                        step={0.001}
+                        required
+                        placeholder="To‘lov summasi"
+                      />
+                      <select required>
+                        <option value="" disabled selected>Valyutani tanlang</option>
+                        <option value="USD">USD</option>
+                        <option value="SUM">SUM</option>
+                      </select>
+                      <button type="submit">
+                        Tasdiqlash
+                      </button>
+                    </form>
+                  }
+                  trigger="click"
+                >
+                  <Button type="primary">
+                    To'lash
+                  </Button>
+                </Tooltip>
+              )
+            }
+            <Popover
+              content={
+                <div>
+                  {record.paymentHistory?.map((payment, index) => (
+                    <p key={index}>
+                      {moment(payment.date).format("DD.MM.YYYY")}: {payment.amount} {payment.currency}
+                    </p>
+                  ))}
+                </div>
+              }
+              title="To'lov tarixi"
+            >
+              <Button style={{ marginLeft: 8 }}>To'lov tarixi</Button>
+            </Popover>
+          </div>
+        )
+      )
+    }
+  ]
 
   return (
     <div>
       <h1>Clientlar</h1>
       <Table columns={clientColumns} dataSource={clients} rowKey="_id" />
       <Modal
-        title="Client tarixi"
+        title="Client tarixi va qarzlari"
         visible={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
         width={1440}
       >
-        <h2>{selectedClient?.name}ning tarixi</h2>
         <Table
-          columns={historyColumns}
-          dataSource={clientHistory?.sales}
+          columns={historyAndDebtColumns}
+          dataSource={combinedData}
           rowKey="_id"
         />
-      </Modal>
-      <Modal
-        title="Client qarzlari"
-        visible={isDebtModalVisible}
-        onCancel={() => setIsDebtModalVisible(false)}
-        footer={null}
-        width={1440}
-      >
-        <h2>{selectedClient?.name}ning qarzlari</h2>
-        <Table columns={debtColumns} dataSource={debts} rowKey="_id" />
       </Modal>
     </div>
   );

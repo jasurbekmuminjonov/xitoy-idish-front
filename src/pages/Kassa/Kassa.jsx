@@ -12,14 +12,27 @@ import { useGetUsdRateQuery } from "../../context/service/usd.service";
 import { useCreateDebtMutation } from "../../context/service/debt.service";
 import { useGetPromosQuery } from "../../context/service/promo.service";
 import { useNavigate } from "react-router-dom";
+import { useAddExpenseMutation, useGetExpensesQuery } from "../../context/service/expense.service";
+import { useForm } from "react-hook-form";
+const { Option } = Select;
 
 const Kassa = () => {
   const { data: products = [] } = useGetProductsQuery();
   const { data: promos = [] } = useGetPromosQuery();
   const { data: usdRate = [] } = useGetUsdRateQuery();
   const { data: clients = [] } = useGetClientsQuery();
+  const { data: expenses = [] } = useGetExpensesQuery();
   const [createClient] = useCreateClientMutation();
   const [createDebt] = useCreateDebtMutation();
+  const [addExpense] = useAddExpenseMutation();
+  const [categories, setCategories] = useState([]);
+
+  const [form] = Form.useForm();
+  const [categoryForm] = Form.useForm();
+
+
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [xarajatModal, setXarajatModal] = useState(false);
   const navigate = useNavigate()
   const [sellProduct] = useSellProductMutation();
   const [selectedClient, setSelectedClient] = useState("")
@@ -33,7 +46,29 @@ const Kassa = () => {
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [dueDate, setDueDate] = useState(null);
-  console.log(paymentDiscount);
+  const [currency, setCurrency] = useState("USD");
+  useEffect(() => {
+    const uniqueCategories = [
+      ...new Set(expenses.map((expense) => expense.category)),
+    ];
+    setCategories(uniqueCategories);
+  }, [expenses]);
+  const handleCancel = () => {
+    setXarajatModal(false);
+    form.resetFields();
+  };
+
+  const handleAdd = async (values) => {
+    await addExpense(values);
+    setXarajatModal(false);
+    form.resetFields();
+  };
+
+  const handleAddCategory = (values) => {
+    setCategories([...categories, values.category]);
+    setIsCategoryModalVisible(false);
+    categoryForm.resetFields();
+  };
 
   useEffect(() => {
     const result = products.filter(
@@ -55,10 +90,16 @@ const Kassa = () => {
     { title: "Soni", dataIndex: "quantity" },
     {
       title: "Sotish narxi",
-      render: (_, record) =>
-        record.sellingPrice.currency === "USD"
-          ? (record.sellingPrice.value * usdRate.rate).toFixed(2)
-          : record.sellingPrice.value.toFixed(2),
+      render: (_, record) => {
+        if (currency === record.currency) {
+          return record.sellingPrice.value?.toFixed(2);
+        } else if (currency === "SUM" && record.currency === "USD") {
+          return (record.sellingPrice.value * usdRate.rate?.toFixed(2));
+        } else if (currency === "USD" && record.currency === "SUM") {
+          return (record.sellingPrice.value / usdRate.rate)?.toFixed(2);
+        }
+        return Number(record.sellingPrice.value)?.toFixed(2);
+      }
     },
     {
       title: "Amallar",
@@ -74,9 +115,9 @@ const Kassa = () => {
                   quantity: 1,
                   sellingPrice: {
                     value:
-                      record.sellingPrice.currency === "USD"
-                        ? record.sellingPrice.value * usdRate.rate
-                        : record.sellingPrice.value,
+                      record.sellingPrice?.currency === "USD"
+                        ? record.sellingPrice?.value * usdRate?.rate
+                        : record.sellingPrice?.value,
                     currency: record.sellingPrice.currency,
                   },
                 },
@@ -129,11 +170,50 @@ const Kassa = () => {
       ),
     },
     {
+      title: "Sotish valyutasi",
+      render: (_, record) => (
+        <Select
+          value={record.currency}
+          defaultValue={record.currency}
+          onChange={(value) => {
+            const newBasket = basket.map((item) => {
+              if (item._id === record._id) {
+                return {
+                  ...item,
+                  currency: value,
+                  sellingPrice: {
+                    ...item.sellingPrice,
+                    value:
+                      value === item.currency
+                        ? parseFloat(item.sellingPrice?.value || "0")
+                        : value === "SUM" && item.currency === "USD"
+                          ? (parseFloat(item.sellingPrice?.value || "0") * usdRate.rate)
+                          : value === "USD" && item.currency === "SUM"
+                            ? (parseFloat(item.sellingPrice?.value || "0") / usdRate.rate)
+                            : parseFloat(item.sellingPrice?.value || "0")
+
+                  }
+                };
+
+
+              }
+              return item;
+            });
+
+            setBasket(newBasket);
+          }}
+        >
+          <Option value="USD">USD</Option>
+          <Option value="SUM">SUM</Option>
+        </Select>
+      )
+    },
+    {
       title: "Sotish narxi",
       render: (_, record) => (
         <Input
           style={{ width: "100px" }}
-          type="text"
+          type="number"
           onChange={(e) => {
             const newBasket = basket.map((item) => {
               if (item._id === record._id) {
@@ -149,7 +229,7 @@ const Kassa = () => {
             });
             setBasket(newBasket);
           }}
-          defaultValue={record.sellingPrice.value.toFixed(2)}
+          value={Number(record?.sellingPrice?.value)?.toFixed(2)}
         />
       ),
     },
@@ -196,9 +276,12 @@ const Kassa = () => {
               clientId,
               productId: item._id,
               quantity: item.quantity,
-              totalAmount: item.sellingPrice.value * item.quantity,
-              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100),
+              totalAmount: (item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)) * item.quantity,
+              currency: item.currency,
+              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)?.toFixed(2),
               paymentMethod,
+              warehouseId: item.warehouse._id,
+
               discount: paymentDiscount,
               dueDate,
             }).unwrap()
@@ -210,9 +293,10 @@ const Kassa = () => {
             sellProduct({
               clientId,
               productId: item._id,
+              currency: item.currency,
               discount: paymentDiscount,
               quantity: item.quantity,
-              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100),
+              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)?.toFixed(2),
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()
@@ -232,6 +316,8 @@ const Kassa = () => {
       message.error("Xatolik yuz berdi");
     }
   };
+  console.log(categories);
+  console.log(expenses);
 
 
   return (
@@ -246,8 +332,15 @@ const Kassa = () => {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+          <Select value={currency} onChange={(value) => setCurrency(value)}>
+            <Option value="SUM">SUM</Option>
+            <Option value="USD">USD</Option>
+          </Select>
           <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => navigate("/debtors")}>
             Qarzdorlar
+          </Button>
+          <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => setXarajatModal(true)}>
+            Xarajat qo'shish
           </Button>
         </div>
         <Table
@@ -270,19 +363,114 @@ const Kassa = () => {
             rowKey="_id"
           />
           <p>
-            Umumiy to'lov:{" "}
-            {basket
+            Umumiy to'lov SUM:{" "}
+            {basket.filter(b => b.currency === "SUM")
               .reduce(
                 (acc, item) => acc + item.sellingPrice.value * item.quantity,
                 0
               )
-              .toLocaleString()}
+              .toLocaleString()} so'm
+          </p>
+          <p>
+            Umumiy to'lov USD:{" "}
+            {basket.filter(b => b.currency === "USD")
+              .reduce(
+                (acc, item) => acc + item.sellingPrice.value * item.quantity,
+                0
+              ).toFixed(2)
+              .toLocaleString()}$
           </p>
           <Button type="primary" onClick={() => setIsModalVisible(true)}>
             Sotish
           </Button>
         </div>
       )}
+      <Modal
+        title="Yangi kategoriya qo'shish"
+        visible={isCategoryModalVisible}
+        onCancel={() => setIsCategoryModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={categoryForm}
+          onFinish={handleAddCategory}
+          layout="vertical"
+        >
+          <Form.Item
+            name="category"
+            label="Kategoriya nomi"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Qo'shish
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Rasxod qo'shish"
+        visible={xarajatModal}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        <Form form={form} onFinish={handleAdd} layout="vertical">
+          <Form.Item name="amount" label="Miqdor" rules={[{ required: true }]}>
+            <Input type="number" />
+          </Form.Item>
+          <Form.Item name="date" label="Sana" rules={[{ required: true }]}>
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item
+            name="category"
+            label="Kategoriya"
+            rules={[{ required: true }]}
+          >
+            <Select
+              placeholder="Kategoriyani tanlang"
+              dropdownRender={(menu) => (
+                <>
+                  {menu}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: 8,
+                    }}
+                  >
+                    <Button
+                      type="link"
+                      onClick={() => setIsCategoryModalVisible(true)}
+                    >
+                      Yangi kategoriya qo'shish
+                    </Button>
+                  </div>
+                </>
+              )}
+            >
+              {categories.map((category, index) => (
+                <Option key={index} value={category}>
+                  {category}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="description" label="Tavsif">
+            <Input />
+          </Form.Item>
+          <Form.Item name="paidTo" label="To'langan shaxs">
+            <Input />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Qo'shish
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <Modal
         title="To'lov va mijoz ma'lumotlarini kiritish"

@@ -68,25 +68,32 @@ export default function EditProductModal({ visible, onCancel, product }) {
         </Form.Item>
         <Form.Item
           name="purchasePrice"
-          rules={[
-            { required: true, message: "Please input the purchase price!" },
-          ]}
         >
           <Input placeholder="Purchase Price" type="number" />
         </Form.Item>
         <Form.Item
+          name="size"
+          rules={[{ required: true, message: "O'lchamni kiriting" }]}
+        >
+          <Input placeholder="O'lcham" type="number" />
+        </Form.Item>
+        <Form.Item
+          name="code"
+          rules={[{ required: true, message: "Mahsulot kodini kiriting" }]}
+        >
+          <Input placeholder="Kod" type="text" />
+        </Form.Item>
+        <Form.Item
           name="sellingPrice"
-          rules={[
-            { required: true, message: "Please input the selling price!" },
-          ]}
         >
           <Input placeholder="Selling Price" type="number" />
         </Form.Item>
         <Form.Item
           name="currency"
-          rules={[{ required: true, message: "Please select the currency!" }]}
         >
           <Select placeholder="Select Currency">
+            <Option value="">Keyin kiritish</Option>
+
             <Option value="USD">USD</Option>
             <Option value="SUM">SUM</Option>
           </Select>

@@ -5,6 +5,7 @@ import {
   useSearchProductsQuery,
 } from "../../context/service/brak.service";
 import { Table, Form, Input, Button, Select } from "antd";
+import moment from "moment";
 // import "./brak.css";
 
 const { Option } = Select;
@@ -25,9 +26,14 @@ const Brak = () => {
       dataIndex: ["productId", "name"],
       key: "productId",
     },
+    {
+      title: "Mahsulot o'lchami",
+      dataIndex: ["productId", "size"],
+      key: "size",
+    },
     { title: "Soni", dataIndex: "quantity", key: "quantity" },
     { title: "Sababi", dataIndex: "reason", key: "reason" },
-    { title: "Qo'shilgan vaqti", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Qo'shilgan vaqti", dataIndex: "createdAt", key: "createdAt", render: (text) => moment(text).format("DD.MM.YYYY HH:mm") },
   ];
 
   const onFinish = (values) => {
@@ -53,7 +59,7 @@ const Brak = () => {
           >
             {products.map((product) => (
               <Option key={product._id} value={product._id}>
-                {product.name}
+                {product.name} - o'lcham: {product.size}
               </Option>
             ))}
           </Select>

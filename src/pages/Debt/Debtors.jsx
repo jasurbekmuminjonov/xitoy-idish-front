@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, message, Modal, Input } from "antd";
+import { Table, Button, message, Modal, Input, Select } from "antd";
 import {
   useGetAllDebtorsQuery,
   usePayDebtMutation,
@@ -18,10 +18,12 @@ const Debtors = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isHistoryModalVisible, setIsHistoryModalVisible] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
-  console.log("hello");
+  const [selectedCurrency, setSelectedCurrency] = useState("")
   const handlePayDebt = async (debtId) => {
     try {
-      await payDebt({ id: debtId, amount: paymentAmount }).unwrap();
+      await payDebt({ id: debtId, amount: paymentAmount, currency: selectedCurrency }).unwrap();
+      setSelectedCurrency("")
+      setPaymentAmount(null)
       message.success("Qarz muvaffaqiyatli to'landi");
       setIsModalVisible(false);
     } catch (error) {
@@ -44,13 +46,21 @@ const Debtors = () => {
       dataIndex: ["clientId", "address"],
       key: "clientId.address",
     },
-    {
-      title: "Tovar nomi",
-      dataIndex: ["productId", "name"],
-      key: "productId.name",
-    },
-    { title: "Soni", dataIndex: "quantity", key: "quantity" },
-    { title: "Umumiy summa", dataIndex: "totalAmount", key: "totalAmount" },
+    ...(role === "admin" ? [
+      {
+        title: "Tovar nomi",
+        dataIndex: ["productId", "name"],
+        key: "productId.name",
+      },
+
+      {
+        title: "Sotish narxi", dataIndex: "sellingPrice", key: "sellingPrice"
+      },
+      {
+        title: "Valyuta", dataIndex: "currency", key: "currency"
+      },
+      { title: "Soni", dataIndex: "quantity", key: "quantity" },
+      { title: "Umumiy summa", dataIndex: "totalAmount", key: "totalAmount" }] : []),
     {
       title: "Qoldiq summa",
       dataIndex: "remainingAmount",
@@ -66,7 +76,7 @@ const Debtors = () => {
     {
       title: "Amallar",
       render: (_, record) => (
-        <div>
+        <div className="table_actions">
           {record.status === "pending" && (
             <Button
               type="primary"
@@ -78,16 +88,21 @@ const Debtors = () => {
               To'lash
             </Button>
           )}
-          <Button
-            type="default"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              setSelectedDebtor(record);
-              setIsHistoryModalVisible(true);
-            }}
-          >
-            Tarix
-          </Button>
+          {
+            role !== "seller" && (
+
+              <Button
+                type="default"
+                icon={<EyeOutlined />}
+                onClick={() => {
+                  setSelectedDebtor(record);
+                  setIsHistoryModalVisible(true);
+                }}
+              >
+                Tarix
+              </Button>
+            )
+          }
         </div>
       ),
     },
@@ -116,9 +131,21 @@ const Debtors = () => {
         <Input
           type="number"
           placeholder="To'lov miqdorini kiriting"
+          step={0.001}
           value={paymentAmount}
           onChange={(e) => setPaymentAmount(e.target.value)}
         />
+        <Select
+          style={{ width: "100%", marginTop: "12px" }}
+          type="text"
+          placeholder="To'lov valyutasini tanlang"
+          value={selectedCurrency}
+
+          onChange={(value) => setSelectedCurrency(value)}
+        >
+          <Select.Option value="USD">USD</Select.Option>
+          <Select.Option value="SUM">SUM</Select.Option>
+        </Select>
       </Modal>
       <Modal
         title="To'lovlar tarixi"
@@ -132,6 +159,11 @@ const Debtors = () => {
               title: "To'lov miqdori",
               dataIndex: "amount",
               key: "amount",
+            },
+            {
+              title: "Valyuta",
+              dataIndex: "currency",
+              key: "currency",
             },
             {
               title: "To'lov sanasi",
