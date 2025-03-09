@@ -14,12 +14,10 @@ const Sales = () => {
   const [filteredSales, setFilteredSales] = useState([])
   useEffect(() => {
     setFilteredSales(sales.filter((sale) => {
-      const matchesProductName = sale.productId?.name
-        .toLowerCase()
-        .includes(filters.productName.toLowerCase());
-      const matchesProductCode = sale.productId?.code
-        .toLowerCase()
-        .includes(filters.productCode.toLowerCase());
+      const matchesProductName = sale.productId?.name?.toLowerCase()
+        .includes(filters.productName?.toLowerCase());
+      const matchesProductCode = sale.productId?.code?.toLowerCase()
+        .includes(filters.productCode?.toLowerCase());
       const matchesPaymentMethod =
         !filters.paymentMethod || sale.paymentMethod === filters.paymentMethod;
       const matchesDateRange =
