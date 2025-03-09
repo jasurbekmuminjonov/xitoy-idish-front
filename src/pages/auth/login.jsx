@@ -13,7 +13,7 @@ const Login = memo(() => {
     try {
       const res = await axios.post(
         // "https://lola-avto-zapchast-dizayin-b.vercel.app/api/login",
-        "http://localhost:8080/api/users/login",
+        "https://xitoy-idish-server.vercel.app/api/users/login",
         value
       );
       console.log(res.data);
