@@ -16,9 +16,7 @@ const PrintBarcodeModal = ({ visible, onCancel, barcode }) => {
     }
   }, [visible, barcode]);
 
-  useEffect(() => {
-    console.log("Modal holati o'zgardi:", visible);
-  }, [visible]);
+
 
 
   const handlePrint = () => {

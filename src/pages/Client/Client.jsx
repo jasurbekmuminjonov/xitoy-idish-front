@@ -70,7 +70,6 @@ const Client = () => {
     ...clientHistory?.map((sale) => ({ ...sale, type: "sale" })) || [],
     ...debts?.map((debt) => ({ ...debt, type: "debt" })) || [],
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  console.log(JSON.stringify(combinedData, null, 2));
 
 
   const historyAndDebtColumns = [
@@ -113,7 +112,6 @@ const Client = () => {
                       e.preventDefault();
                       const amount = Number(e.target[0].value);
                       const currency = e.target[1].value;
-                      console.log(currency);
 
                       handlePayDebt(record._id, amount, currency);
                     }} className="modal_form">

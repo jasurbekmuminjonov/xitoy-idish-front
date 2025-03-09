@@ -185,7 +185,6 @@ const Product = () => {
       ),
     },
   ];
-  console.log(products.filter((p) => p.currency === "SUM").reduce((acc, product) => acc + product.quantity * product.purchasePrice.value, 0));
 
   return (
     <div>

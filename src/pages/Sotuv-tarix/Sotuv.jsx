@@ -27,9 +27,7 @@ const Sales = () => {
       return matchesProductName && matchesProductCode && matchesPaymentMethod && matchesDateRange;
     }))
   }, [filters, sales])
-  console.log(moment("2025-03-08T04:26:17.302Z").isSameOrAfter("2025-03-09T04:26:17.302Z"));
 
-  console.log(filters);
 
   const columns = [
     { title: "Mijoz ismi", dataIndex: ["clientId", "name"], key: "clientId" },

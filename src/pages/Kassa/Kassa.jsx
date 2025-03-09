@@ -14,6 +14,8 @@ import { useGetPromosQuery } from "../../context/service/promo.service";
 import { useNavigate } from "react-router-dom";
 import { useAddExpenseMutation, useGetExpensesQuery } from "../../context/service/expense.service";
 import { useForm } from "react-hook-form";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 const { Option } = Select;
 
 const Kassa = () => {
@@ -47,6 +49,58 @@ const Kassa = () => {
   const [clientAddress, setClientAddress] = useState("");
   const [dueDate, setDueDate] = useState(null);
   const [currency, setCurrency] = useState("USD");
+  console.log(selectedClient);
+
+  const generatePDF = () => {
+    const client = {
+      name: clientName || "Noma'lum",
+      phone: clientPhone || "Noma'lum",
+      address: clientAddress || "Noma'lum",
+      dueDate: dueDate,
+    };
+    const isCredit = paymentMethod === "credit";
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text("Hisob faktura", 14, 10);
+    doc.text(`Mijoz: ${client.name}`, 14, 20);
+    doc.text(`Telefon: ${client.phone}`, 14, 30);
+    doc.text(`Manzil: ${client.address}`, 14, 40);
+    let startY = 50;
+    if (isCredit && client.dueDate) {
+      doc.text(`To'lov muddati: ${client.dueDate}`, 14, 50);
+      startY = 60;
+    }
+
+    doc.text(`Sana: ${new Date().toLocaleDateString()}`, 14, startY);
+    startY += 10;
+    const columns = [
+      "No", "Nomi", "O'lchov birligi", "O'lchami", "Soni", "Sotish narxi",
+      "Chegirma", "Valyuta", "Umumiy narx"
+    ];
+    const rows = basket.map((item, index) => [
+      index + 1,
+      item.name,
+      item.unit || "-",
+      item.size || "-",
+      item.quantity,
+      item.sellingPrice.value,
+      paymentDiscount || 0,
+      item.currency,
+      (item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)) * item.quantity
+    ]);
+    autoTable(doc, {
+      startY: startY + 10,
+      head: [columns],
+      body: rows,
+    });
+
+    doc.save("sotuv_cheki.pdf");
+    const pdfUrl = doc.output("bloburl");
+    window.open(pdfUrl, "_blank");
+  };
+
+
+
   useEffect(() => {
     const uniqueCategories = [
       ...new Set(expenses.map((expense) => expense.category)),
@@ -249,6 +303,7 @@ const Kassa = () => {
   ];
 
   const handleSell = async () => {
+    generatePDF()
     if (
       !paymentMethod ||
       (!selectedClient && (!clientName || !clientPhone || !clientAddress)) ||
@@ -316,9 +371,8 @@ const Kassa = () => {
       message.error("Xatolik yuz berdi");
     }
   };
-  console.log(categories);
-  console.log(expenses);
 
+  console.log(basket);
 
   return (
     <div className="page" style={{ marginTop: "8px", paddingInline: "4px" }}>
@@ -513,7 +567,12 @@ const Kassa = () => {
             <Select
               showSearch
               value={selectedClient}
-              onChange={(value) => setSelectedClient(value)}
+              onChange={(value) => {
+                setSelectedClient(value); const client = clients.find(c => c._id === value)
+                setClientAddress(client.address)
+                setClientPhone(client.phone)
+                setClientName(client.name)
+              }}
               placeholder="Haridorni tanlang"
               optionFilterProp="children"
               filterOption={(input, option) =>

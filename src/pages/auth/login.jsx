@@ -16,7 +16,6 @@ const Login = memo(() => {
         "https://xitoy-idish-server.vercel.app/api/users/login",
         value
       );
-      console.log(res.data);
 
       const token = res.data.token;
       const acsess = res.data.success;

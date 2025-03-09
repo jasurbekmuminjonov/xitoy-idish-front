@@ -102,7 +102,6 @@ const Expense = () => {
         handleDelete(id);
       },
       onCancel() {
-        console.log("Cancel");
       },
     });
   };
