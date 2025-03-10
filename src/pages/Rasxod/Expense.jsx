@@ -169,7 +169,7 @@ const Expense = () => {
               <Option key={index} value={category}>{category}</Option>
             ))}
           </Select>
-          <DatePicker.RangePicker placeholder={["Boshlash", "Tugash"]} onChange={handleDateFilterChange} />
+          <DatePicker.RangePicker placeholder={["Dan", "Gacha"]} onChange={handleDateFilterChange} />
         </div>
       </div>
       <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>

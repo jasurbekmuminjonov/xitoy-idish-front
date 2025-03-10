@@ -32,6 +32,11 @@ const Brak = () => {
       key: "size",
     },
     { title: "Soni", dataIndex: "quantity", key: "quantity" },
+    {
+      title: "Birlik",
+      dataIndex: ["productId", "unit"],
+      key: "unit",
+    },
     { title: "Sababi", dataIndex: "reason", key: "reason" },
     { title: "Qo'shilgan vaqti", dataIndex: "createdAt", key: "createdAt", render: (text) => moment(text).format("DD.MM.YYYY HH:mm") },
   ];

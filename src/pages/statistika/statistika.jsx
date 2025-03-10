@@ -66,7 +66,7 @@ const Statistika = () => {
     return (
         <div className='page'>
             <div className="page_header">
-                <RangePicker placeholder={["Boshlash", "Tugash"]} onChange={handleDateChange} />
+                <RangePicker placeholder={["Dan", "Gacha"]} onChange={handleDateChange} />
             </div>
             {/* <div className="hisobot_cards">
                 <div className="hisobot_card">

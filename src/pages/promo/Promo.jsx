@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Form, Input, Modal, message, Popconfirm } from "antd";
+import { Table, Button, Form, Input, Modal, message, Popconfirm, Select } from "antd";
 import { MdEdit, MdDeleteForever } from "react-icons/md";
 import { useCreatePromoMutation, useDeletePromoMutation, useGetPromosQuery, useUpdatePromoMutation } from "../../context/service/promo.service";
 
@@ -52,9 +52,9 @@ export default function Promo() {
             key: "code",
         },
         {
-            title: "Chegirma foizi",
+            title: "Chegirma",
             dataIndex: "percent",
-            render: (text) => text + "%",
+            render: (text) => text,
             key: "percent",
         },
         {
@@ -92,6 +92,12 @@ export default function Promo() {
                     </Form.Item>
                     <Form.Item name="percent" rules={[{ required: true, message: "Chegirmani kiriting" }]}>
                         <Input placeholder="Chegirma foizi" type="number" />
+                    </Form.Item>
+                    <Form.Item name="type" rules={[{ required: true, message: "Chegirma turini kiriting" }]}>
+                        <Select placeholde="Promokod turi">
+                            <Select.Option value="percent">Foiz</Select.Option>
+                            <Select.Option value="amount">Summa</Select.Option>
+                        </Select>
                     </Form.Item>
                     <Button type="primary" htmlType="submit">
                         {currentPromo ? "Yangilash" : "Qo'shish"}

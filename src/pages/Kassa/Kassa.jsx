@@ -4,7 +4,7 @@ import {
   useGetClientsQuery,
   useCreateClientMutation,
 } from "../../context/service/client.service";
-import { Button, Input, Table, Modal, Select, Form, message, AutoComplete } from "antd";
+import { Button, Input, Table, Modal, Select, Form, message } from "antd";
 import "./kassa.css";
 import { MdDeleteForever } from "react-icons/md";
 import { useSellProductMutation } from "../../context/service/sales.service";
@@ -13,7 +13,6 @@ import { useCreateDebtMutation } from "../../context/service/debt.service";
 import { useGetPromosQuery } from "../../context/service/promo.service";
 import { useNavigate } from "react-router-dom";
 import { useAddExpenseMutation, useGetExpensesQuery } from "../../context/service/expense.service";
-import { useForm } from "react-hook-form";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 const { Option } = Select;
@@ -28,11 +27,8 @@ const Kassa = () => {
   const [createDebt] = useCreateDebtMutation();
   const [addExpense] = useAddExpenseMutation();
   const [categories, setCategories] = useState([]);
-
   const [form] = Form.useForm();
   const [categoryForm] = Form.useForm();
-
-
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [xarajatModal, setXarajatModal] = useState(false);
   const navigate = useNavigate()
@@ -49,7 +45,6 @@ const Kassa = () => {
   const [clientAddress, setClientAddress] = useState("");
   const [dueDate, setDueDate] = useState(null);
   const [currency, setCurrency] = useState("USD");
-  console.log(selectedClient);
 
   const generatePDF = () => {
     const client = {
@@ -66,6 +61,7 @@ const Kassa = () => {
     doc.text(`Telefon: ${client.phone}`, 14, 30);
     doc.text(`Manzil: ${client.address}`, 14, 40);
     let startY = 50;
+
     if (isCredit && client.dueDate) {
       doc.text(`To'lov muddati: ${client.dueDate}`, 14, 50);
       startY = 60;
@@ -73,28 +69,48 @@ const Kassa = () => {
 
     doc.text(`Sana: ${new Date().toLocaleDateString()}`, 14, startY);
     startY += 10;
+
     const columns = [
-      "No", "Nomi", "O'lchov birligi", "O'lchami", "Soni", "Sotish narxi",
-      "Chegirma", "Valyuta", "Umumiy narx"
+      "No",
+      "Nomi",
+      "O'lchov birligi",
+      "O'lchami",
+      "Soni",
+      "Sotish narxi",
+      "Chegirma",
+      "Valyuta",
+      "Umumiy narx",
     ];
-    const rows = basket.map((item, index) => [
-      index + 1,
-      item.name,
-      item.unit || "-",
-      item.size || "-",
-      item.quantity,
-      item.sellingPrice.value,
-      paymentDiscount || 0,
-      item.currency,
-      (item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)) * item.quantity
-    ]);
+
+    const rows = basket.map((item, index) => {
+      const promo = promos.find((p) => p._id === paymentDiscount);
+      const totalAmount =
+        promo
+          ? promo.type === "percentage"
+            ? (item.sellingPrice.value - (item.sellingPrice.value * promo.percent) / 100) * item.quantity
+            : (item.sellingPrice.value - promo.percent) * item.quantity
+          : item.sellingPrice.value * item.quantity;
+
+      return [
+        index + 1,
+        item.name,
+        item.unit || "-",
+        item.size || "-",
+        item.quantity,
+        item.sellingPrice.value.toFixed(2), // Ikkilik kasr formatlash
+        promos.find((p) => p._id === paymentDiscount).percent.toFixed(2),
+        item.currency,
+        totalAmount.toFixed(2),
+      ];
+    });
+
     autoTable(doc, {
       startY: startY + 10,
       head: [columns],
       body: rows,
     });
 
-    doc.save("sotuv_cheki.pdf");
+    doc.save("hisob_faktura.pdf");
     const pdfUrl = doc.output("bloburl");
     window.open(pdfUrl, "_blank");
   };
@@ -303,7 +319,7 @@ const Kassa = () => {
   ];
 
   const handleSell = async () => {
-    generatePDF()
+    generatePDF();
     if (
       !paymentMethod ||
       (!selectedClient && (!clientName || !clientPhone || !clientAddress)) ||
@@ -324,6 +340,15 @@ const Kassa = () => {
         clientId = clientResponse._id;
       }
 
+      // Chegirma promos dan topiladi
+      const promo = promos.find((p) => p._id === paymentDiscount);
+      const getDiscountedPrice = (price) => {
+        if (!promo) return price; // Agar promo bo'lmasa, narx o'zgarishsiz qoladi
+        return promo.type === "percentage"
+          ? price - (price * promo.percent) / 100 // Foiz chegirma
+          : price - promo.percent; // Fiks chegirma (amount)
+      };
+
       if (paymentMethod === "credit") {
         await Promise.all(
           basket.map((item) =>
@@ -331,13 +356,12 @@ const Kassa = () => {
               clientId,
               productId: item._id,
               quantity: item.quantity,
-              totalAmount: (item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)) * item.quantity,
+              totalAmount: getDiscountedPrice(item.sellingPrice.value) * item.quantity,
               currency: item.currency,
-              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)?.toFixed(2),
+              sellingPrice: getDiscountedPrice(item.sellingPrice.value).toFixed(2),
               paymentMethod,
               warehouseId: item.warehouse._id,
-
-              discount: paymentDiscount,
+              discount: promos.find((p) => p._id === paymentDiscount).percent,
               dueDate,
             }).unwrap()
           )
@@ -349,9 +373,9 @@ const Kassa = () => {
               clientId,
               productId: item._id,
               currency: item.currency,
-              discount: paymentDiscount,
+              discount: promos.find((p) => p._id === paymentDiscount).percent,
               quantity: item.quantity,
-              sellingPrice: item.sellingPrice.value - (item.sellingPrice.value * paymentDiscount / 100)?.toFixed(2),
+              sellingPrice: getDiscountedPrice(item.sellingPrice.value).toFixed(2),
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()
@@ -372,7 +396,6 @@ const Kassa = () => {
     }
   };
 
-  console.log(basket);
 
   return (
     <div className="page" style={{ marginTop: "8px", paddingInline: "4px" }}>
@@ -557,7 +580,7 @@ const Kassa = () => {
               <Select.Option value={0}>Promokodsiz</Select.Option>
               {
                 promos.map((item) => (
-                  <Select.Option key={item._id} value={item.percent}>{item.code}</Select.Option>
+                  <Select.Option key={item._id} value={item._id}>{item.code}</Select.Option>
                 ))
               }
             </Select>
