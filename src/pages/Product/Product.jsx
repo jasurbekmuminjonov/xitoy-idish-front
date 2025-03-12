@@ -47,6 +47,10 @@ const Product = () => {
   const [addProduct] = useAddProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [currentBarcode, setCurrentBarcode] = useState(null);
+  const [option1, setOption1] = useState('')
+  const [option2, setOption2] = useState('')
+  const [option3, setOption3] = useState('')
+  const [option4, setOption4] = useState('')
   const [imageUrl, setImageUrl] = useState("")
   const handleUpload = async (file) => {
     const formData = new FormData();
@@ -81,6 +85,7 @@ const Product = () => {
 
   const handleCancel = () => {
     setModalVisible(false);
+    setImageUrl("")
     form.resetFields();
   };
 
@@ -98,6 +103,7 @@ const Product = () => {
       form.resetFields();
       setEditingProduct("")
       setModalVisible(false);
+      setImageUrl("")
       message.success("Product added successfully");
     } catch (error) {
       if (
@@ -122,11 +128,6 @@ const Product = () => {
       key: "name",
     },
     {
-      title: "Birlik",
-      dataIndex: "unit",
-      key: "unit",
-    },
-    {
       title: "Kod",
       dataIndex: "code",
       key: "code",
@@ -137,7 +138,12 @@ const Product = () => {
       key: "size",
     },
     {
-      title: "Soni",
+      title: "Kg miqdor",
+      dataIndex: "kg_quantity",
+      key: "kg_quantity",
+    },
+    {
+      title: "Dona soni",
       dataIndex: "quantity",
       key: "quantity",
     },
@@ -263,9 +269,9 @@ const Product = () => {
               { required: true, message: "Please input the product name!" },
             ]}
           >
-            <Input placeholder="Product Name" />
+            <Input placeholder="Tovar nomi" />
           </Form.Item>
-          <Form.Item
+          {/* <Form.Item
             name="unit"
             rules={[{ required: true, message: "Please select the unit!" }]}
           >
@@ -275,12 +281,12 @@ const Product = () => {
               <Option value="karobka">Karobka</Option>
               <Option value="pachka">Pachka</Option>
             </Select>
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item
             name="size"
             rules={[{ required: true, message: "O'lchamni kiriting" }]}
           >
-            <Input placeholder="O'lcham" type="number" />
+            <Input placeholder="O'lcham" type="text" />
           </Form.Item>
           <Form.Item
             name="code"
@@ -292,33 +298,76 @@ const Product = () => {
             name={["purchasePrice", "value"]}
 
           >
-            <Input placeholder="Purchase Price" />
+            <Input placeholder="Tan narxi" />
           </Form.Item>
           <Form.Item
             name={["sellingPrice", "value"]}
 
           >
-            <Input placeholder="Selling Price" />
+            <Input placeholder="Sotish narxi" />
           </Form.Item>
-          <Form.Item
-            name="quantity"
-          >
-            <Input placeholder="Soni" />
-          </Form.Item>
-          <Form.Item
-            name="box_quantity"
-          >
-            <Input placeholder="Karobka soni" />
-          </Form.Item>
-          <Form.Item
-            name="package_quantity"
-          >
-            <Input placeholder="Pachka soni" />
-          </Form.Item>
+
+
+          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption1(value)} value={option1}>
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item
+              name={option1}
+            >
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption2(value)} value={option2}>
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item
+              name={option2}
+            >
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption3(value)} value={option3}>
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item
+              name={option3}
+            >
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption4(value)} value={option4}>
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item
+              name={option4}
+            >
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+
+
+
+
           <Form.Item
             name="currency"
           >
-            <Select placeholder="Select Currency">
+            <Select placeholder="Valyuta tanlash">
               <Option value="">Keyin kiritish</Option>
               <Option value="USD">USD</Option>
               <Option value="SUM">SUM</Option>
@@ -330,7 +379,7 @@ const Product = () => {
               { required: true, message: "Please select the warehouse!" },
             ]}
           >
-            <Select placeholder="Select Warehouse" loading={warehousesLoading}>
+            <Select placeholder="Ombor tanlash" loading={warehousesLoading}>
               {warehouses.map((warehouse) => (
                 <Option key={warehouse._id} value={warehouse._id}>
                   {warehouse?.name}
@@ -342,7 +391,7 @@ const Product = () => {
             name="category"
             rules={[{ required: true, message: "Please input the category!" }]}
           >
-            <Input placeholder="Category" />
+            <Input placeholder="Kategoriya" />
           </Form.Item>
           <Form.Item name="barcode" hidden>
             <Input />
