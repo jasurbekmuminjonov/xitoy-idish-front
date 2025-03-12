@@ -20,6 +20,13 @@ const Brak = () => {
       skip: !searchTerm,
     });
 
+  const stm = {
+    kg_quantity: 'kg',
+    quantity: 'dona',
+    box_quantity: 'karobka',
+    package_quantity: 'pachka',
+  }
+
   const columns = [
     {
       title: "Mahsulot nomi",
@@ -30,6 +37,7 @@ const Brak = () => {
     {
       title: "Birlik",
       dataIndex: 'unit',
+      render: (text) => stm[text] || text,
       key: "unit",
     },
     { title: "Sababi", dataIndex: "reason", key: "reason" },
@@ -72,10 +80,10 @@ const Brak = () => {
           rules={[{ required: true, message: "O'lchov birlikni kiriting" }]}
         >
           <Select placeholder="O'lchov birlik">
-            <Option value="kg">Kilogram</Option>
-            <Option value="dona">Dona</Option>
-            <Option value="karobka">Karobka</Option>
-            <Option value="pachka">Pachka</Option>
+            <Option value="kg_quantity">Kilogram</Option>
+            <Option value="quantity">Dona</Option>
+            <Option value="box_quantity">Karobka</Option>
+            <Option value="package_quantity">Pachka</Option>
           </Select>
         </Form.Item>
         <Form.Item name="reason" label="Sababi" rules={[{ required: true }]}>

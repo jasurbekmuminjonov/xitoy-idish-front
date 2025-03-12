@@ -9,12 +9,14 @@ export const brakApi = apiSlice.injectEndpoints({
         method: "POST",
         body: brakData,
       }),
+      invalidatesTags: ['brak']
     }),
     getBrakHistory: builder.query({
       query: () => ({
         url: "/brak/history",
         method: "GET",
       }),
+      providesTags: ['brak']
     }),
     searchProducts: builder.query({
       query: (searchTerm) => ({
