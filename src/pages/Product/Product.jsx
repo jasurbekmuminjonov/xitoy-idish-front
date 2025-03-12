@@ -8,6 +8,7 @@ import {
   Modal,
   message,
   Popconfirm,
+  Upload,
 } from "antd";
 import { useReactToPrint } from "react-to-print";
 import Barcode from "react-barcode";
@@ -19,6 +20,8 @@ import {
 } from "../../context/service/product.service";
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
 import { MdEdit, MdDeleteForever, MdPrint } from "react-icons/md";
+import axios from "axios";
+import { FaUpload } from "react-icons/fa";
 
 const { Option } = Select;
 
@@ -43,8 +46,25 @@ const Product = () => {
     useGetWarehousesQuery();
   const [addProduct] = useAddProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
-  const [currentBarcode, setCurrentBarcode] = useState("");
+  const [currentBarcode, setCurrentBarcode] = useState(null);
+  const [imageUrl, setImageUrl] = useState("")
+  const handleUpload = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("key", '65384e0beb6c45b817d791e806199b7e');
+
+    try {
+      const response = await axios.post("https://api.imgbb.com/1/upload", formData);
+      const url = response.data.data.url;
+      setImageUrl(url);
+      message.success("Rasm muvaffaqiyatli yuklandi!");
+    } catch (error) {
+      console.error("Yuklashda xatolik:", error);
+      message.error("Rasmni yuklashda xatolik yuz berdi.");
+    }
+  };
   const printRef = useRef();
+  console.log(currentBarcode);
 
   useEffect(() => {
     if (currentBarcode) {
@@ -66,6 +86,7 @@ const Product = () => {
 
   const onFinish = async (values) => {
     try {
+      values.image_url = imageUrl
       if (editingProduct) {
         await editProduct({
           id: editingProduct,
@@ -116,9 +137,19 @@ const Product = () => {
       key: "size",
     },
     {
-      title: "Miqdori",
+      title: "Soni",
       dataIndex: "quantity",
       key: "quantity",
+    },
+    {
+      title: "Karobka soni",
+      dataIndex: "box_quantity",
+      key: "box_quantity",
+    },
+    {
+      title: "Pachka soni",
+      dataIndex: "package_quantity",
+      key: "package_quantity",
     },
     {
       title: "Valyuta",
@@ -160,6 +191,7 @@ const Product = () => {
           <Button type="primary" onClick={() => {
             setEditingProduct(record._id)
             form.setFieldsValue({ ...record, barcode: record.barcode });
+            setImageUrl(record.image_url)
             setModalVisible(true);
           }}>
             <MdEdit />
@@ -237,7 +269,7 @@ const Product = () => {
             name="unit"
             rules={[{ required: true, message: "Please select the unit!" }]}
           >
-            <Select placeholder="Select Unit">
+            <Select placeholder="O'lchov birlik">
               <Option value="kg">Kilogram</Option>
               <Option value="dona">Dona</Option>
               <Option value="karobka">Karobka</Option>
@@ -270,9 +302,18 @@ const Product = () => {
           </Form.Item>
           <Form.Item
             name="quantity"
-            rules={[{ required: true, message: "Tovar sonini kiriting" }]}
           >
             <Input placeholder="Soni" />
+          </Form.Item>
+          <Form.Item
+            name="box_quantity"
+          >
+            <Input placeholder="Karobka soni" />
+          </Form.Item>
+          <Form.Item
+            name="package_quantity"
+          >
+            <Input placeholder="Pachka soni" />
           </Form.Item>
           <Form.Item
             name="currency"
@@ -306,6 +347,27 @@ const Product = () => {
           <Form.Item name="barcode" hidden>
             <Input />
           </Form.Item>
+          <Upload
+            customRequest={({ file }) => handleUpload(file)}
+            showUploadList={false}
+          >
+            <Button><FaUpload /> Rasmni tanlash</Button>
+          </Upload>
+          <Form.Item>
+
+            {imageUrl && (
+              <div style={{ marginTop: 20 }}>
+                <p>Yuklangan rasm:</p>
+                <img src={imageUrl} alt="Uploaded" style={{ width: 200 }} />
+                <p>
+                  <a href={imageUrl} target="_blank" rel="noopener noreferrer">
+                    Rasm URL manzili
+                  </a>
+                </p>
+              </div>
+            )}
+          </Form.Item>
+
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Tovar qo'shish
@@ -317,7 +379,7 @@ const Product = () => {
       <div style={{ display: "none" }}>
         <BarcodePrint ref={printRef} barcode={currentBarcode} />
       </div>
-    </div>
+    </div >
   );
 };
 

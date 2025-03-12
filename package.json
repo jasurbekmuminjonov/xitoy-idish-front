@@ -11,7 +11,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.21.0",
-    "axios": "^1.7.9",
+    "axios": "^1.8.3",
     "chart.js": "^4.4.7",
     "framer-motion": "^11.5.4",
     "generate-unique-id": "^2.0.3",

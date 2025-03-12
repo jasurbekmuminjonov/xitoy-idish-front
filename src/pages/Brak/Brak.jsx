@@ -26,15 +26,10 @@ const Brak = () => {
       dataIndex: ["productId", "name"],
       key: "productId",
     },
-    {
-      title: "Mahsulot o'lchami",
-      dataIndex: ["productId", "size"],
-      key: "size",
-    },
     { title: "Soni", dataIndex: "quantity", key: "quantity" },
     {
       title: "Birlik",
-      dataIndex: ["productId", "unit"],
+      dataIndex: 'unit',
       key: "unit",
     },
     { title: "Sababi", dataIndex: "reason", key: "reason" },
@@ -71,6 +66,17 @@ const Brak = () => {
         </Form.Item>
         <Form.Item name="quantity" label="Soni" rules={[{ required: true }]}>
           <Input type="number" />
+        </Form.Item>
+        <Form.Item
+          name="unit"
+          rules={[{ required: true, message: "O'lchov birlikni kiriting" }]}
+        >
+          <Select placeholder="O'lchov birlik">
+            <Option value="kg">Kilogram</Option>
+            <Option value="dona">Dona</Option>
+            <Option value="karobka">Karobka</Option>
+            <Option value="pachka">Pachka</Option>
+          </Select>
         </Form.Item>
         <Form.Item name="reason" label="Sababi" rules={[{ required: true }]}>
           <Input />
