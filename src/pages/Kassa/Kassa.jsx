@@ -39,7 +39,7 @@ const Kassa = () => {
   const [basket, setBasket] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentDiscount, setPaymentDiscount] = useState(0);
+  const [paymentDiscount, setPaymentDiscount] = useState('');
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -98,7 +98,7 @@ const Kassa = () => {
         item.size || "-",
         item.quantity,
         item.sellingPrice.value.toFixed(2), // Ikkilik kasr formatlash
-        promos.find((p) => p._id === paymentDiscount).percent.toFixed(2),
+        paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent.toFixed(2) : 0,
         item.currency,
         totalAmount.toFixed(2),
       ];
@@ -361,7 +361,7 @@ const Kassa = () => {
               sellingPrice: getDiscountedPrice(item.sellingPrice.value).toFixed(2),
               paymentMethod,
               warehouseId: item.warehouse._id,
-              discount: promos.find((p) => p._id === paymentDiscount).percent,
+              discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
               dueDate,
             }).unwrap()
           )
@@ -373,7 +373,7 @@ const Kassa = () => {
               clientId,
               productId: item._id,
               currency: item.currency,
-              discount: promos.find((p) => p._id === paymentDiscount).percent,
+              discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
               quantity: item.quantity,
               sellingPrice: getDiscountedPrice(item.sellingPrice.value).toFixed(2),
               warehouseId: item.warehouse._id,
