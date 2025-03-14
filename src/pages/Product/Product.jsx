@@ -38,8 +38,8 @@ const BarcodePrint = React.forwardRef(({ barcode }, ref) => (
 const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
-  const [editProduct] = useUpdateProductMutation()
-  const [editingProduct, setEditingProduct] = useState('')
+  const [editProduct] = useUpdateProductMutation();
+  const [editingProduct, setEditingProduct] = useState("");
   const { data: products = [], isLoading: productsLoading } =
     useGetProductsQuery();
   const { data: warehouses = [], isLoading: warehousesLoading } =
@@ -47,18 +47,21 @@ const Product = () => {
   const [addProduct] = useAddProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [currentBarcode, setCurrentBarcode] = useState(null);
-  const [option1, setOption1] = useState('')
-  const [option2, setOption2] = useState('')
-  const [option3, setOption3] = useState('')
-  const [option4, setOption4] = useState('')
-  const [imageUrl, setImageUrl] = useState("")
+  const [option1, setOption1] = useState("");
+  const [option2, setOption2] = useState("");
+  const [option3, setOption3] = useState("");
+  const [option4, setOption4] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const handleUpload = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
-    formData.append("key", '65384e0beb6c45b817d791e806199b7e');
+    formData.append("key", "65384e0beb6c45b817d791e806199b7e");
 
     try {
-      const response = await axios.post("https://api.imgbb.com/1/upload", formData);
+      const response = await axios.post(
+        "https://api.imgbb.com/1/upload",
+        formData
+      );
       const url = response.data.data.url;
       setImageUrl(url);
       message.success("Rasm muvaffaqiyatli yuklandi!");
@@ -68,7 +71,6 @@ const Product = () => {
     }
   };
   const printRef = useRef();
-  console.log(currentBarcode);
 
   useEffect(() => {
     if (currentBarcode) {
@@ -85,25 +87,25 @@ const Product = () => {
 
   const handleCancel = () => {
     setModalVisible(false);
-    setImageUrl("")
+    setImageUrl("");
     form.resetFields();
   };
 
   const onFinish = async (values) => {
     try {
-      values.image_url = imageUrl
+      values.image_url = imageUrl;
       if (editingProduct) {
         await editProduct({
           id: editingProduct,
-          data: values
-        })
+          data: values,
+        });
       } else {
         await addProduct(values).unwrap();
       }
       form.resetFields();
-      setEditingProduct("")
+      setEditingProduct("");
       setModalVisible(false);
-      setImageUrl("")
+      setImageUrl("");
       message.success("Product added successfully");
     } catch (error) {
       if (
@@ -123,9 +125,35 @@ const Product = () => {
 
   const columns = [
     {
-      title: "Tovar nomi",
+      title: "Tovar",
       dataIndex: "name",
       key: "name",
+      render: (text, record) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          {record.image_url ? (
+            <img
+              src={record.image_url}
+              alt={record.name}
+              style={{ width: "50px", height: "50px", marginRight: "10px" }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "50px",
+                height: "50px",
+                marginRight: "10px",
+                backgroundColor: "#f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              No Image
+            </div>
+          )}
+          <span>{record.name}</span>
+        </div>
+      ),
     },
     {
       title: "Kod",
@@ -194,17 +222,20 @@ const Product = () => {
       title: "Amallar",
       render: (_, record) => (
         <div className="table_actions">
-          <Button type="primary" onClick={() => {
-            setEditingProduct(record._id)
-            form.setFieldsValue({ ...record, barcode: record.barcode });
-            setImageUrl(record.image_url)
-            setModalVisible(true);
-          }}>
+          <Button
+            type="primary"
+            onClick={() => {
+              setEditingProduct(record._id);
+              form.setFieldsValue({ ...record, barcode: record.barcode });
+              setImageUrl(record.image_url);
+              setModalVisible(true);
+            }}
+          >
             <MdEdit />
           </Button>
           <Popconfirm
             title="Mahsulotni o'chirmoqchimisiz"
-            onCancel={() => { }}
+            onCancel={() => {}}
             onConfirm={() => deleteProduct(record._id)}
             okText="O'chirish"
             cancelText="Orqaga"
@@ -235,18 +266,34 @@ const Product = () => {
           Tovar qo'shish
         </Button>
         <div className="stats">
-
-          <p>Umumiy tovar soni: {products.reduce((a, b) => a + b.quantity, 0)}</p>
+          <p>
+            Umumiy tovar soni: {products.reduce((a, b) => a + b.quantity, 0)}
+          </p>
           <p>
             Umumiy tovar tan narxi (sum):{" "}
-            {products.filter((p) => p.currency === "SUM").reduce((acc, product) => acc + product.quantity * product.purchasePrice.value, 0).toLocaleString()} so'm
+            {products
+              .filter((p) => p.currency === "SUM")
+              .reduce(
+                (acc, product) =>
+                  acc + product.quantity * product.purchasePrice.value,
+                0
+              )
+              .toLocaleString()}{" "}
+            so'm
           </p>
           <p>
             Umumiy tovar tan narxi ($):{" "}
-            {products.filter((p) => p.currency === "USD").reduce((acc, product) => acc + product.quantity * product.purchasePrice.value, 0).toLocaleString()}$
+            {products
+              .filter((p) => p.currency === "USD")
+              .reduce(
+                (acc, product) =>
+                  acc + product.quantity * product.purchasePrice.value,
+                0
+              )
+              .toLocaleString()}
+            $
           </p>
         </div>
-
       </div>
 
       <Table
@@ -271,17 +318,6 @@ const Product = () => {
           >
             <Input placeholder="Tovar nomi" />
           </Form.Item>
-          {/* <Form.Item
-            name="unit"
-            rules={[{ required: true, message: "Please select the unit!" }]}
-          >
-            <Select placeholder="O'lchov birlik">
-              <Option value="kg">Kilogram</Option>
-              <Option value="dona">Dona</Option>
-              <Option value="karobka">Karobka</Option>
-              <Option value="pachka">Pachka</Option>
-            </Select>
-          </Form.Item> */}
           <Form.Item
             name="size"
             rules={[{ required: true, message: "O'lchamni kiriting" }]}
@@ -294,79 +330,111 @@ const Product = () => {
           >
             <Input placeholder="Kod" type="text" />
           </Form.Item>
-          <Form.Item
-            name={["purchasePrice", "value"]}
-
-          >
+          <Form.Item name={["purchasePrice", "value"]}>
             <Input placeholder="Tan narxi" />
           </Form.Item>
-          <Form.Item
-            name={["sellingPrice", "value"]}
-
-          >
+          <Form.Item name={["sellingPrice", "value"]}>
             <Input placeholder="Sotish narxi" />
           </Form.Item>
 
-
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption1(value)} value={option1}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option1}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption2(value)} value={option2}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option2}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption3(value)} value={option3}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option3}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption4(value)} value={option4}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option4}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-
-
-
-
-          <Form.Item
-            name="currency"
+          <div
+            style={{
+              marginBottom: "6px",
+              width: "100%",
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
+            }}
           >
+            <Select
+              placeholder="O'lchov birlik"
+              style={{ width: "150px" }}
+              onChange={(value) => setOption1(value)}
+              value={option1}
+            >
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item name={option1}>
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+          <div
+            style={{
+              marginBottom: "6px",
+              width: "100%",
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
+            }}
+          >
+            <Select
+              placeholder="O'lchov birlik"
+              style={{ width: "150px" }}
+              onChange={(value) => setOption2(value)}
+              value={option2}
+            >
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item name={option2}>
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+          <div
+            style={{
+              marginBottom: "6px",
+              width: "100%",
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
+            }}
+          >
+            <Select
+              placeholder="O'lchov birlik"
+              style={{ width: "150px" }}
+              onChange={(value) => setOption3(value)}
+              value={option3}
+            >
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item name={option3}>
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+          <div
+            style={{
+              marginBottom: "6px",
+              width: "100%",
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
+            }}
+          >
+            <Select
+              placeholder="O'lchov birlik"
+              style={{ width: "150px" }}
+              onChange={(value) => setOption4(value)}
+              value={option4}
+            >
+              <Option value="kg_quantity">Kilogram</Option>
+              <Option value="quantity">Dona</Option>
+              <Option value="box_quantity">Karobka</Option>
+              <Option value="package_quantity">Pachka</Option>
+            </Select>
+            <Form.Item name={option4}>
+              <Input placeholder="Miqdor" />
+            </Form.Item>
+          </div>
+
+          <Form.Item name="currency">
             <Select placeholder="Valyuta tanlash">
               <Option value="">Keyin kiritish</Option>
               <Option value="USD">USD</Option>
@@ -400,10 +468,11 @@ const Product = () => {
             customRequest={({ file }) => handleUpload(file)}
             showUploadList={false}
           >
-            <Button><FaUpload /> Rasmni tanlash</Button>
+            <Button>
+              <FaUpload /> Rasmni tanlash
+            </Button>
           </Upload>
           <Form.Item>
-
             {imageUrl && (
               <div style={{ marginTop: 20 }}>
                 <p>Yuklangan rasm:</p>
@@ -428,7 +497,7 @@ const Product = () => {
       <div style={{ display: "none" }}>
         <BarcodePrint ref={printRef} barcode={currentBarcode} />
       </div>
-    </div >
+    </div>
   );
 };
 
