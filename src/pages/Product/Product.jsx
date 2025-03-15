@@ -340,7 +340,6 @@ const Product = () => {
           <Form.Item name={["sellingPrice", "value"]}>
             <Input placeholder="Sotish narxi" />
           </Form.Item>
-<<<<<<< HEAD
   {/* <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
             <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption1(value)} value={option1}>
               <Option value="kg_quantity">Kilogram</Option>
@@ -413,17 +412,6 @@ const Product = () => {
           </Form.Item>
           <Form.Item
             name="currency"
-=======
-
-          <div
-            style={{
-              marginBottom: "6px",
-              width: "100%",
-              display: "flex",
-              alignItems: "start",
-              justifyContent: "space-between",
-            }}
->>>>>>> d175c3261b37452e8951edd5ddf83b1ed0bf029d
           >
             <Select
               placeholder="O'lchov birlik"
