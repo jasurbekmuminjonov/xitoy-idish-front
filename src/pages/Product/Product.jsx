@@ -138,7 +138,7 @@ const Product = () => {
             <img
               src={record.image_url}
               alt={record.name}
-              style={{ width: "50px", height: "50px", marginRight: "10px" }}
+              style={{ width: "50px", height: "50px", marginRight: "10px", objectFit: "contain" }}
             />
           ) : (
             <div
@@ -340,7 +340,7 @@ const Product = () => {
           <Form.Item name={["sellingPrice", "value"]}>
             <Input placeholder="Sotish narxi" />
           </Form.Item>
-  {/* <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+          {/* <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
             <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption1(value)} value={option1}>
               <Option value="kg_quantity">Kilogram</Option>
               <Option value="quantity">Dona</Option>
@@ -410,7 +410,7 @@ const Product = () => {
           <Form.Item name={"package_quantity_per_box"}>
             <Input placeholder="1 karobkadagi pachka miqdori" />
           </Form.Item>
-          <Form.Item
+          {/* <Form.Item
             name="currency"
           >
             <Select
@@ -426,8 +426,8 @@ const Product = () => {
             </Select>
             <Form.Item name={option1}>
               <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
+            </Form.Item> */}
+          {/* </div>
           <div
             style={{
               marginBottom: "6px",
@@ -499,7 +499,7 @@ const Product = () => {
             <Form.Item name={option4}>
               <Input placeholder="Miqdor" />
             </Form.Item>
-          </div>
+          </div> */}
 
           <Form.Item name="currency">
             <Select placeholder="Valyuta tanlash">
@@ -561,9 +561,9 @@ const Product = () => {
         </Form >
       </Modal >
 
-  <div style={{ display: "none" }}>
-    <BarcodePrint ref={printRef} barcode={currentBarcode} />
-  </div>
+      <div style={{ display: "none" }}>
+        <BarcodePrint ref={printRef} barcode={currentBarcode} />
+      </div>
     </div >
   );
 };
