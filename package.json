@@ -15,6 +15,7 @@
     "chart.js": "^4.4.7",
     "framer-motion": "^11.5.4",
     "generate-unique-id": "^2.0.3",
+    "html2canvas": "^1.4.1",
     "jsbarcode": "^3.11.6",
     "jspdf": "^3.0.0",
     "jspdf-autotable": "^5.0.2",

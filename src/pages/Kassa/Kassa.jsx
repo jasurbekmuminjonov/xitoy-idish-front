@@ -15,6 +15,9 @@ import { useNavigate } from "react-router-dom";
 import { useAddExpenseMutation, useGetExpensesQuery } from "../../context/service/expense.service";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
+
+import moment from "moment";
 const { Option } = Select;
 
 const Kassa = () => {
@@ -44,79 +47,8 @@ const Kassa = () => {
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [dueDate, setDueDate] = useState(null);
-  const [currency, setCurrency] = useState("USD");
-
-  const generatePDF = () => {
-    const client = {
-      name: clientName || "Noma'lum",
-      phone: clientPhone || "Noma'lum",
-      address: clientAddress || "Noma'lum",
-      dueDate: dueDate,
-    };
-    const isCredit = paymentMethod === "credit";
-    const doc = new jsPDF();
-    doc.setFontSize(12);
-    doc.text("Hisob faktura", 14, 10);
-    doc.text(`Mijoz: ${client.name}`, 14, 20);
-    doc.text(`Telefon: ${client.phone}`, 14, 30);
-    doc.text(`Manzil: ${client.address}`, 14, 40);
-    let startY = 50;
-
-    if (isCredit && client.dueDate) {
-      doc.text(`To'lov muddati: ${client.dueDate}`, 14, 50);
-      startY = 60;
-    }
-
-    doc.text(`Sana: ${new Date().toLocaleDateString()}`, 14, startY);
-    startY += 10;
-
-    const columns = [
-      "No",
-      "Nomi",
-      "O'lchov birligi",
-      "O'lchami",
-      "Soni",
-      "Sotish narxi",
-      "Chegirma",
-      "Valyuta",
-      "Umumiy narx",
-    ];
-
-    const rows = basket.map((item, index) => {
-      const promo = promos.find((p) => p._id === paymentDiscount);
-      const totalAmount =
-        promo
-          ? promo.type === "percentage"
-            ? (item.sellingPrice.value - (item.sellingPrice.value * promo.percent) / 100) * item.quantity
-            : (item.sellingPrice.value - promo.percent) * item.quantity
-          : item.sellingPrice.value * item.quantity;
-
-      return [
-        index + 1,
-        item.name,
-        item.unit || "-",
-        item.size || "-",
-        item.quantity,
-        item.sellingPrice.value.toFixed(2), // Ikkilik kasr formatlash
-        paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent.toFixed(2) : 0,
-        item.currency,
-        totalAmount.toFixed(2),
-      ];
-    });
-
-    autoTable(doc, {
-      startY: startY + 10,
-      head: [columns],
-      body: rows,
-    });
-
-    doc.save("hisob_faktura.pdf");
-    const pdfUrl = doc.output("bloburl");
-    window.open(pdfUrl, "_blank");
-  };
-
-
-
+  const [currency, setCurrency] = useState("SUM");
+  const [selectedUnit, setSelectedUnit] = useState("quantity")
   useEffect(() => {
     const uniqueCategories = [
       ...new Set(expenses.map((expense) => expense.category)),
@@ -138,6 +70,119 @@ const Kassa = () => {
     setCategories([...categories, values.category]);
     setIsCategoryModalVisible(false);
     categoryForm.resetFields();
+  };
+
+  console.log(basket);
+
+
+  const generatePDF = () => {
+    const printWindow = window.open("", "", "width=600,height=600");
+    printWindow.document.open();
+
+    const { totalUSD, totalSUM } = basket.reduce(
+      (acc, item) => {
+        const promo = promos.find(p => p._id === paymentDiscount);
+        const totalPrice = item.sellingPrice.value * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null);
+        const discountedPrice = promo
+          ? promo.type === "percent"
+            ? totalPrice - (totalPrice / 100 * promo.percent)
+            : totalPrice - promo.percent
+          : totalPrice;
+
+        if (item.currency === "USD") {
+          acc.totalUSD += discountedPrice;
+        } else {
+          acc.totalSUM += discountedPrice;
+        }
+        return acc;
+      },
+      { totalUSD: 0, totalSUM: 0 }
+    );
+
+
+    const tableRows = basket.map((item, index) => {
+      const promo = promos.find(p => p._id === paymentDiscount);
+      const totalPrice = item.sellingPrice.value * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null);
+      const discountedPrice = promo
+        ? promo.type === "percent"
+          ? totalPrice - (totalPrice / 100 * promo.percent)
+          : totalPrice - promo.percent
+        : totalPrice;
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${item.name}</td>
+          <td>${selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null}</td>
+          <td>${item.sellingPrice.value.toFixed(2)}</td>
+          <td>${item.currency === "USD" ? 'Доллар' : "Сум"}</td>
+          <td>${promo ? `${promo.percent} ${promo.type === "percent" ? "%" : "сум"}` : "—"}</td>
+          <td>${discountedPrice.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join(""); // Har bir `<tr>` ni string formatiga o‘tkazib, bitta matn sifatida qo‘shib chiqarish kerak
+
+    const content = `
+      <div style="width:210mm; height:297mm; display:flex; flex-direction:column; gap:6px; padding:12px; font-family:sans-serif">
+        <b style="display:flex; text-align:center; width:100%; justify-content:center; font-size:sans-serif">
+          ${moment().format("DD.MM.YYYY")} даги Хисобварак-фактура
+        </b><br />
+        <div style="display:flex; width:100%; background:red">
+          <div style="display:flex; flex-direction:column; gap:6px; width:50%; background:green">
+            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between; background:yellow">
+              <b>Етказиб берувчи:</b>
+              <p>"BANKERSUZ GROUP" MCHJ</p>
+            </div>
+            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
+              <b>Манзил:</b>
+              <p>ГОРОД ТАШКEНТ УЛИЦА НАВОИЙ 16-А</p>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
+              <b>Сотиб олувчи:</b>
+              <p>${clientName}</p>
+            </div>
+            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
+              <b>Манзил:</b>
+              <p>${clientAddress}</p>
+            </div>
+          </div>
+        </div>
+        <table border="1" style="border-collapse: collapse; width: 100%;">
+          <thead>
+            <tr>
+              <td>No</td>
+              <td>Махсулот номи</td>
+              <td>Миқдор</td>
+              <td>Нарх</td>
+              <td>Валюта</td>
+              <td>Чегирма</td>
+              <td>Умумий сумма</td>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <b>Жами тўловнинг доллар билан тўланадиган қисми: ${totalUSD.toFixed(2)} доллар</b>
+        <b>Жами тўловнинг сyм билан тўланадиган қисми: ${totalSUM.toFixed(2)} сyм</b>
+      </div>
+    `;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Хисобварак-фактура</title>
+        </head>
+        <body>
+          ${content}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.close();
   };
 
   useEffect(() => {
@@ -304,6 +349,16 @@ const Kassa = () => {
       ),
     },
     {
+      title: "O'lchov birlik",
+      render: (_, record) => (
+        <Select style={{ width: "100px" }} required onChange={(value) => setSelectedUnit(value)} value={selectedUnit} placeholder="Tanlang">
+          <Select.Option value="quantity">Dona</Select.Option>
+          <Select.Option value="package_quantity">Pachka</Select.Option>
+          <Select.Option value="box_quantity">Karobka</Select.Option>
+        </Select>
+      )
+    },
+    {
       title: "Amallar",
       render: (_, record) => (
         <Button
@@ -340,13 +395,12 @@ const Kassa = () => {
         clientId = clientResponse._id;
       }
 
-      // Chegirma promos dan topiladi
       const promo = promos.find((p) => p._id === paymentDiscount);
-      const getDiscountedPrice = (price) => {
-        if (!promo) return price; // Agar promo bo'lmasa, narx o'zgarishsiz qoladi
-        return promo.type === "percentage"
-          ? price - (price * promo.percent) / 100 // Foiz chegirma
-          : price - promo.percent; // Fiks chegirma (amount)
+      const getDiscountedPrice = (price, quantity) => {
+        if (!promo) return price;
+        return promo.type === "percent"
+          ? price - (price * promo.percent) / 100
+          : (price * quantity - promo.percent) / quantity;
       };
 
       if (paymentMethod === "credit") {
@@ -355,10 +409,11 @@ const Kassa = () => {
             createDebt({
               clientId,
               productId: item._id,
-              quantity: item.quantity,
-              totalAmount: getDiscountedPrice(item.sellingPrice.value) * item.quantity,
+              quantity: selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null,
+              unit: selectedUnit,
+              totalAmount: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2) * selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null,
               currency: item.currency,
-              sellingPrice: getDiscountedPrice(item.sellingPrice.value).toFixed(2),
+              sellingPrice: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2),
               paymentMethod,
               warehouseId: item.warehouse._id,
               discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
@@ -372,10 +427,11 @@ const Kassa = () => {
             sellProduct({
               clientId,
               productId: item._id,
+              unit: selectedUnit,
               currency: item.currency,
               discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
-              quantity: item.quantity,
-              sellingPrice: getDiscountedPrice(item.sellingPrice.value).toFixed(2),
+              quantity: selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null,
+              sellingPrice: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2),
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()
@@ -386,6 +442,7 @@ const Kassa = () => {
       setIsModalVisible(false);
       setBasket([]);
       setPaymentMethod("");
+      setSelectedClient("")
       setClientName("");
       setClientPhone("");
       setClientAddress("");
@@ -413,7 +470,7 @@ const Kassa = () => {
             <Option value="SUM">SUM</Option>
             <Option value="USD">USD</Option>
           </Select>
-          <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => navigate("/debtors")}>
+          <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => navigate('/debtors')}>
             Qarzdorlar
           </Button>
           <Button style={{ justifySelf: "end", display: "flex" }} type="primary" onClick={() => setXarajatModal(true)}>
@@ -443,19 +500,19 @@ const Kassa = () => {
             Umumiy to'lov SUM:{" "}
             {basket.filter(b => b.currency === "SUM")
               .reduce(
-                (acc, item) => acc + item.sellingPrice.value * item.quantity,
+                (acc, item) => acc + item.sellingPrice.value * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null),
                 0
               )
-              .toLocaleString()} so'm
+              ?.toLocaleString()} so'm
           </p>
           <p>
             Umumiy to'lov USD:{" "}
             {basket.filter(b => b.currency === "USD")
               .reduce(
-                (acc, item) => acc + item.sellingPrice.value * item.quantity,
+                (acc, item) => acc + item.sellingPrice.value * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null),
                 0
               ).toFixed(2)
-              .toLocaleString()}$
+              ?.toLocaleString()}$
           </p>
           <Button type="primary" onClick={() => setIsModalVisible(true)}>
             Sotish
@@ -592,9 +649,9 @@ const Kassa = () => {
               value={selectedClient}
               onChange={(value) => {
                 setSelectedClient(value); const client = clients.find(c => c._id === value)
-                setClientAddress(client.address)
-                setClientPhone(client.phone)
-                setClientName(client.name)
+                setClientAddress(client?.address)
+                setClientPhone(client?.phone)
+                setClientName(client?.name)
               }}
               placeholder="Haridorni tanlang"
               optionFilterProp="children"
@@ -676,3 +733,77 @@ const Kassa = () => {
 };
 
 export default Kassa;
+
+
+
+
+
+// const generatePDF = () => {
+//   const client = {
+//     name: clientName || "Noma'lum",
+//     phone: clientPhone || "Noma'lum",
+//     address: clientAddress || "Noma'lum",
+//     dueDate: dueDate,
+//   };
+//   const isCredit = paymentMethod === "credit";
+//   const doc = new jsPDF();
+//   doc.setFontSize(12);
+//   doc.text("Hisob faktura", 14, 10);
+//   doc.text(`Mijoz: ${client.name}`, 14, 20);
+//   doc.text(`Telefon: ${client.phone}`, 14, 30);
+//   doc.text(`Manzil: ${client.address}`, 14, 40);
+//   let startY = 50;
+
+//   if (isCredit && client.dueDate) {
+//     doc.text(`To'lov muddati: ${client.dueDate}`, 14, 50);
+//     startY = 60;
+//   }
+
+//   doc.text(`Sana: ${new Date().toLocaleDateString()}`, 14, startY);
+//   startY += 10;
+
+//   const columns = [
+//     "No",
+//     "Nomi",
+//     "O'lchov birligi",
+//     "O'lchami",
+//     "Soni",
+//     "Sotish narxi",
+//     "Chegirma",
+//     "Valyuta",
+//     "Umumiy narx",
+//   ];
+
+//   const rows = basket.map((item, index) => {
+//     const promo = promos.find((p) => p._id === paymentDiscount);
+//     const totalAmount =
+//       promo
+//         ? promo.type === "percent"
+//           ? (item.sellingPrice.value - (item.sellingPrice.value * promo.percent) / 100) * item.quantity
+//           : item.sellingPrice.value * item.quantity - promo.percent
+//         : item.sellingPrice.value * item.quantity;
+
+//     return [
+//       index + 1,
+//       item.name,
+//       item.unit || "-",
+//       item.size || "-",
+//       item.quantity,
+//       item.sellingPrice.value.toFixed(2),
+//       paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent.toFixed(2) : 0,
+//       item.currency,
+//       totalAmount.toFixed(2),
+//     ];
+//   });
+
+//   autoTable(doc, {
+//     startY: startY + 10,
+//     head: [columns],
+//     body: rows,
+//   });
+
+//   doc.save("hisob_faktura.pdf");
+//   const pdfUrl = doc.output("bloburl");
+//   window.open(pdfUrl, "_blank");
+// };
+

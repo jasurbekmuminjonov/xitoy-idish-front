@@ -92,6 +92,10 @@ const Product = () => {
   const onFinish = async (values) => {
     try {
       values.image_url = imageUrl
+      const total_kg = Number(values.total_kg).toFixed(2);
+      values.kg_per_box = (total_kg / Number(values.box_quantity)).toFixed(2);
+      values.kg_per_package = (total_kg / Number(values.package_quantity)).toFixed(2);
+      values.kg_per_quantity = (total_kg / Number(values.quantity)).toFixed(2);
       if (editingProduct) {
         await editProduct({
           id: editingProduct,
@@ -138,9 +142,9 @@ const Product = () => {
       key: "size",
     },
     {
-      title: "Kg miqdor",
-      dataIndex: "kg_quantity",
-      key: "kg_quantity",
+      title: "Umumiy vazni(kg)",
+      dataIndex: "total_kg",
+      key: "total_kg",
     },
     {
       title: "Dona soni",
@@ -306,9 +310,7 @@ const Product = () => {
           >
             <Input placeholder="Sotish narxi" />
           </Form.Item>
-
-
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+          {/* <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
             <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption1(value)} value={option1}>
               <Option value="kg_quantity">Kilogram</Option>
               <Option value="quantity">Dona</Option>
@@ -359,11 +361,25 @@ const Product = () => {
             >
               <Input placeholder="Miqdor" />
             </Form.Item>
-          </div>
-
-
-
-
+          </div> */}
+          <Form.Item name={"total_kg"}>
+            <Input placeholder="Umumiy vazni(kg)" />
+          </Form.Item>
+          <Form.Item name={"quantity"}>
+            <Input placeholder="Dona miqdori" />
+          </Form.Item>
+          <Form.Item name={"package_quantity"}>
+            <Input placeholder="Pachka miqdori" />
+          </Form.Item>
+          <Form.Item name={"quantity_per_package"}>
+            <Input placeholder="1 pachkadagi dona miqdori" />
+          </Form.Item>
+          <Form.Item name={"box_quantity"}>
+            <Input placeholder="Karobka miqdori" />
+          </Form.Item>
+          <Form.Item name={"package_quantity_per_box"}>
+            <Input placeholder="1 karobkadagi pachka miqdori" />
+          </Form.Item>
           <Form.Item
             name="currency"
           >

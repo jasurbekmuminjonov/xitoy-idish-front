@@ -20,6 +20,8 @@ const Brak = () => {
       skip: !searchTerm,
     });
 
+  const [selectedUnit, setSelectedUnit] = useState("quantity");
+
   const stm = {
     kg_quantity: 'kg',
     quantity: 'dona',
@@ -33,10 +35,14 @@ const Brak = () => {
       dataIndex: ["productId", "name"],
       key: "productId",
     },
-    { title: "Soni", dataIndex: "quantity", key: "quantity" },
+    {
+      title: "Soni",
+      render: (_, record) => record.unit === "box_quantity" ? record.quantity / record.productId.package_quantity_per_box / record.productId.quantity_per_package : record.unit === "package_quantity" ? record.quantity / record.productId.quantity_per_package : record.unit === "quantity" ? record.quantity : null,
+      key: "quantity",
+    },
     {
       title: "Birlik",
-      dataIndex: 'unit',
+      dataIndex: "unit",
       render: (text) => stm[text] || text,
       key: "unit",
     },
@@ -45,6 +51,8 @@ const Brak = () => {
   ];
 
   const onFinish = (values) => {
+    const item = products.find((p) => p._id === values.productId);
+    values.quantity = (selectedUnit === "quantity" ? values.quantity : selectedUnit === "package_quantity" ? values.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? values.quantity * item.quantity_per_package * item.package_quantity_per_box : null)
     addBrak(values);
   };
 
@@ -79,11 +87,10 @@ const Brak = () => {
           name="unit"
           rules={[{ required: true, message: "O'lchov birlikni kiriting" }]}
         >
-          <Select placeholder="O'lchov birlik">
-            <Option value="kg_quantity">Kilogram</Option>
-            <Option value="quantity">Dona</Option>
-            <Option value="box_quantity">Karobka</Option>
-            <Option value="package_quantity">Pachka</Option>
+          <Select style={{ width: "150px" }} required onChange={(value) => setSelectedUnit(value)} value={selectedUnit} placeholder="Tanlang">
+            <Select.Option value="quantity">Dona</Select.Option>
+            <Select.Option value="package_quantity">Pachka</Select.Option>
+            <Select.Option value="box_quantity">Karobka</Select.Option>
           </Select>
         </Form.Item>
         <Form.Item name="reason" label="Sababi" rules={[{ required: true }]}>

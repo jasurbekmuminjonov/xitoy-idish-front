@@ -50,15 +50,11 @@ const Sales = () => {
     },
     {
       title: "Sotish narxi(so'm)",
-      dataIndex: ["payment", "sum"],
-      key: "sellingPrice",
-      render: (text) => `${text} so'm`,
+      render: (_, record) => `${(record.payment.sum / record.quantity)?.toFixed(2)} so'm`,
     },
     {
       title: "Sotish narxi($)",
-      dataIndex: ["payment", "usd"],
-      key: "sellingPrice",
-      render: (text) => `${text?.toFixed(2)}$`,
+      render: (_, record) => `${(record.payment.usd / record.quantity)?.toFixed(2)}$`,
     },
     {
       title: "Sotish sanasi",
@@ -67,6 +63,7 @@ const Sales = () => {
       render: (text) => moment(text).format("DD.MM.YYYY HH:mm"),
     },
   ];
+
 
   if (isLoading) {
     return <div>Yuklanmoqda...</div>;
