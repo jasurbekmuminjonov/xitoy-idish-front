@@ -258,9 +258,8 @@ const Kassa = () => {
     },
     {
       title: "Pachka soni",
-      dataIndex: "package_quantity",
       key: "package_quantity",
-      render: (text) => text?.toFixed(2)
+      render: (_, record) => record?.isPackage ? record?.package_quantity?.toFixed(2) : "-"
 
     },
     {
@@ -443,7 +442,7 @@ const Kassa = () => {
       render: (_, record) => (
         <Select style={{ width: "100px" }} required onChange={(value) => setSelectedUnit(value)} value={selectedUnit} placeholder="Tanlang">
           <Select.Option value="quantity">Dona</Select.Option>
-          <Select.Option value="package_quantity">Pachka</Select.Option>
+          <Select.Option disabled={!record.isPackage} value="package_quantity">Pachka</Select.Option>
           <Select.Option value="box_quantity">Karobka</Select.Option>
         </Select>
       )

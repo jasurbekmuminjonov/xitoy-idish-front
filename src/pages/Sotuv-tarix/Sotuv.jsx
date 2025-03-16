@@ -49,12 +49,16 @@ const Sales = () => {
       render: (_, record) => `${record.productId.purchasePrice.value} ${record.productId.currency}`,
     },
     {
-      title: "Sotish narxi(so'm)",
-      render: (_, record) => `${(record.payment.sum / record.quantity)?.toFixed(2)} so'm`,
+      title: "Sotish narxi",
+      dataIndex: "sellingPrice",
     },
     {
-      title: "Sotish narxi($)",
-      render: (_, record) => `${(record.payment.usd / record.quantity)?.toFixed(2)}$`,
+      title: "To'lov(so'm)",
+      render: (_, record) => `${(record.payment.sum)?.toFixed(2)} so'm`,
+    },
+    {
+      title: "To'lov($)",
+      render: (_, record) => `${(record.payment.usd)?.toFixed(2)}$`,
     },
     {
       title: "Sotish sanasi",

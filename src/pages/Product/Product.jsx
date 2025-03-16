@@ -97,8 +97,10 @@ const Product = () => {
         const newBarcode = generateBarcode();
         setCurrentBarcode(newBarcode);
         values.barcode = newBarcode;
+        values.isPackage = isPackage
       }
       values.image_url = imageUrl
+
       const total_kg = Number(values.total_kg)?.toFixed(2);
       values.kg_per_box = (total_kg / Number(values.box_quantity))?.toFixed(2);
       values.kg_per_package = isPackage ? (total_kg / Number(values.package_quantity))?.toFixed(2) : null;
@@ -195,9 +197,8 @@ const Product = () => {
     },
     {
       title: "Pachka soni",
-      dataIndex: "package_quantity",
       key: "package_quantity",
-      render: (text) => text?.toFixed(2)
+      render: (_, record) => record?.isPackage ? record?.package_quantity?.toFixed(2) : "-"
 
     },
     {
