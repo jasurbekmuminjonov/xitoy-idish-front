@@ -9,6 +9,7 @@ import {
   message,
   Popconfirm,
   Upload,
+  Switch,
 } from "antd";
 import { useReactToPrint } from "react-to-print";
 import Barcode from "react-barcode";
@@ -21,7 +22,7 @@ import {
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
 import { MdEdit, MdDeleteForever, MdPrint } from "react-icons/md";
 import axios from "axios";
-import { FaUpload } from "react-icons/fa";
+import { FaArrowRight, FaUpload } from "react-icons/fa";
 
 const { Option } = Select;
 
@@ -52,6 +53,7 @@ const Product = () => {
   const [option3, setOption3] = useState("");
   const [option4, setOption4] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [isPackage, setIsPackage] = useState(true);
   const handleUpload = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
@@ -79,10 +81,8 @@ const Product = () => {
   }, [currentBarcode]);
 
   const handleAddProduct = () => {
-    const newBarcode = generateBarcode();
-    setCurrentBarcode(newBarcode);
     setModalVisible(true);
-    form.setFieldsValue({ barcode: generateBarcode() });
+
   };
 
   const handleCancel = () => {
@@ -93,11 +93,16 @@ const Product = () => {
 
   const onFinish = async (values) => {
     try {
+      if (!editingProduct) {
+        const newBarcode = generateBarcode();
+        setCurrentBarcode(newBarcode);
+        values.barcode = newBarcode;
+      }
       values.image_url = imageUrl
-      const total_kg = Number(values.total_kg).toFixed(2);
-      values.kg_per_box = (total_kg / Number(values.box_quantity)).toFixed(2);
-      values.kg_per_package = (total_kg / Number(values.package_quantity)).toFixed(2);
-      values.kg_per_quantity = (total_kg / Number(values.quantity)).toFixed(2);
+      const total_kg = Number(values.total_kg)?.toFixed(2);
+      values.kg_per_box = (total_kg / Number(values.box_quantity))?.toFixed(2);
+      values.kg_per_package = isPackage ? (total_kg / Number(values.package_quantity))?.toFixed(2) : null;
+      values.kg_per_quantity = (total_kg / Number(values.quantity))?.toFixed(2);
       if (editingProduct) {
         await editProduct({
           id: editingProduct,
@@ -124,7 +129,7 @@ const Product = () => {
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-    onAfterPrint: () => setCurrentBarcode(""), // Clear barcode after printing
+    onAfterPrint: () => setCurrentBarcode(""),
   });
 
   const columns = [
@@ -133,12 +138,12 @@ const Product = () => {
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: 'column' }}>
           {record.image_url ? (
             <img
               src={record.image_url}
               alt={record.name}
-              style={{ width: "50px", height: "50px", marginRight: "10px", objectFit: "contain" }}
+              style={{ width: "100px", height: "100px", marginRight: "10px", objectFit: "contain" }}
             />
           ) : (
             <div
@@ -152,7 +157,7 @@ const Product = () => {
                 justifyContent: "center",
               }}
             >
-              No Image
+              Rasm yo'q
             </div>
           )}
           <span>{record.name}</span>
@@ -173,21 +178,27 @@ const Product = () => {
       title: "Umumiy vazni(kg)",
       dataIndex: "total_kg",
       key: "total_kg",
+      render: (text) => text?.toFixed(2)
+
     },
     {
       title: "Dona soni",
       dataIndex: "quantity",
-      key: "quantity",
+      key: "quantity"
+
     },
     {
       title: "Karobka soni",
       dataIndex: "box_quantity",
       key: "box_quantity",
+      render: (text) => text?.toFixed(2)
     },
     {
       title: "Pachka soni",
       dataIndex: "package_quantity",
       key: "package_quantity",
+      render: (text) => text?.toFixed(2)
+
     },
     {
       title: "Valyuta",
@@ -225,12 +236,12 @@ const Product = () => {
     {
       title: "Amallar",
       render: (_, record) => (
-        <div className="table_actions">
+        <div className="table_actions" style={{ flexDirection: 'column' }}>
           <Button
             type="primary"
             onClick={() => {
               setEditingProduct(record._id);
-              form.setFieldsValue({ ...record, barcode: record.barcode });
+              form.setFieldsValue({ ...record, barcode: record.barcode, package_quantity: record.package_quantity?.toFixed(2), box_quantity: record.box_quantity?.toFixed(2) });
               setImageUrl(record.image_url);
               setModalVisible(true);
             }}
@@ -260,7 +271,7 @@ const Product = () => {
   ];
 
   return (
-    <div>
+    <div style={{ background: "#fff" }}>
       <div className="page_header">
         <Button
           type="primary"
@@ -304,6 +315,7 @@ const Product = () => {
         columns={columns}
         dataSource={products}
         loading={productsLoading}
+        style={{ overflow: "auto", minWidth: "100%" }}
         rowKey="_id"
       />
 
@@ -313,9 +325,10 @@ const Product = () => {
         onCancel={handleCancel}
         footer={null}
       >
-        <Form form={form} onFinish={onFinish} layout="vertical">
+        <Form autoComplete="off" form={form} onFinish={onFinish} layout="vertical">
           <Form.Item
             name="name"
+            label="Tovar nomi"
             rules={[
               { required: true, message: "Please input the product name!" },
             ]}
@@ -323,6 +336,7 @@ const Product = () => {
             <Input placeholder="Tovar nomi" />
           </Form.Item>
           <Form.Item
+            label="Tovar o'lchami"
             name="size"
             rules={[{ required: true, message: "O'lchamni kiriting" }]}
           >
@@ -330,14 +344,15 @@ const Product = () => {
           </Form.Item>
           <Form.Item
             name="code"
+            label="Tovar kodi"
             rules={[{ required: true, message: "Mahsulot kodini kiriting" }]}
           >
             <Input placeholder="Kod" type="text" />
           </Form.Item>
-          <Form.Item name={["purchasePrice", "value"]}>
+          <Form.Item label="Tan narxi" name={["purchasePrice", "value"]}>
             <Input placeholder="Tan narxi" />
           </Form.Item>
-          <Form.Item name={["sellingPrice", "value"]}>
+          <Form.Item label="Sotish narxi" name={["sellingPrice", "value"]}>
             <Input placeholder="Sotish narxi" />
           </Form.Item>
           {/* <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
@@ -392,24 +407,32 @@ const Product = () => {
               <Input placeholder="Miqdor" />
             </Form.Item>
           </div> */}
-          <Form.Item name={"total_kg"}>
+          <Form.Item label="Umumiy vazni" name={"total_kg"}>
             <Input placeholder="Umumiy vazni(kg)" />
           </Form.Item>
-          <Form.Item name={"quantity"}>
+          <Form.Item label="Dona miqdori" name={"quantity"}>
             <Input placeholder="Dona miqdori" />
           </Form.Item>
-          <Form.Item name={"package_quantity"}>
-            <Input placeholder="Pachka miqdori" />
+          <Form.Item label="Pachka miqdori" name={"package_quantity"}>
+            <Input disabled={!isPackage} placeholder="Pachka miqdori" />
           </Form.Item>
-          <Form.Item name={"quantity_per_package"}>
-            <Input placeholder="1 pachkadagi dona miqdori" />
+          <Form.Item label="1 pachkadagi dona miqdori" name={"quantity_per_package"}>
+            <Input disabled={!isPackage} placeholder="1 pachkadagi dona miqdori" />
           </Form.Item>
-          <Form.Item name={"box_quantity"}>
+          <Form.Item label="Karobka miqdori" name={"box_quantity"}>
             <Input placeholder="Karobka miqdori" />
           </Form.Item>
-          <Form.Item name={"package_quantity_per_box"}>
-            <Input placeholder="1 karobkadagi pachka miqdori" />
+          <Form.Item label={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} name={"package_quantity_per_box"}>
+            <Input placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} />
           </Form.Item>
+          <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", justifyContent: "start" }}>
+            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>Karobka <FaArrowRight /> Dona</p>
+
+            <Switch style={{ marginBottom: "12px" }} value={isPackage} onChange={(checked) => setIsPackage(checked)}></Switch>
+            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>Karobka <FaArrowRight /> Pachka <FaArrowRight /> Dona</p>
+
+          </div>
+
           {/* <Form.Item
             name="currency"
           >
@@ -501,7 +524,7 @@ const Product = () => {
             </Form.Item>
           </div> */}
 
-          <Form.Item name="currency">
+          <Form.Item label="Valyuta" name="currency">
             <Select placeholder="Valyuta tanlash">
               <Option value="">Keyin kiritish</Option>
               <Option value="USD">USD</Option>
@@ -509,6 +532,7 @@ const Product = () => {
             </Select>
           </Form.Item>
           <Form.Item
+            label="Ombor"
             name="warehouse"
             rules={[
               { required: true, message: "Please select the warehouse!" },
@@ -523,15 +547,17 @@ const Product = () => {
             </Select>
           </Form.Item>
           <Form.Item
+            label="Kategoriya"
             name="category"
             rules={[{ required: true, message: "Please input the category!" }]}
           >
             <Input placeholder="Kategoriya" />
           </Form.Item>
-          <Form.Item name="barcode" hidden>
+          <Form.Item label="Barkod" name="barcode" hidden>
             <Input />
           </Form.Item>
           <Upload
+
             customRequest={({ file }) => handleUpload(file)}
             showUploadList={false}
           >

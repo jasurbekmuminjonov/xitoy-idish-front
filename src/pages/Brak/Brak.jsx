@@ -34,10 +34,11 @@ const Brak = () => {
       title: "Mahsulot nomi",
       dataIndex: ["productId", "name"],
       key: "productId",
+      render: (text) => text || "Tovar o'chirilgan"
     },
     {
       title: "Soni",
-      render: (_, record) => record.unit === "box_quantity" ? record.quantity / record.productId.package_quantity_per_box / record.productId.quantity_per_package : record.unit === "package_quantity" ? record.quantity / record.productId.quantity_per_package : record.unit === "quantity" ? record.quantity : null,
+      render: (_, record) => record.unit === "box_quantity" ? record.quantity / record?.productId?.package_quantity_per_box / record?.productId?.quantity_per_package : record.unit === "package_quantity" ? record.quantity / record.productId?.quantity_per_package : record.unit === "quantity" ? record.quantity : null,
       key: "quantity",
     },
     {
@@ -52,7 +53,7 @@ const Brak = () => {
 
   const onFinish = (values) => {
     const item = products.find((p) => p._id === values.productId);
-    values.quantity = (selectedUnit === "quantity" ? values.quantity : selectedUnit === "package_quantity" ? values.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? values.quantity * item.quantity_per_package * item.package_quantity_per_box : null)
+    values.quantity = (selectedUnit === "quantity" ? values.quantity : selectedUnit === "package_quantity" ? values.quantity * item?.quantity_per_package : selectedUnit === "box_quantity" ? values.quantity * item?.quantity_per_package * item.package_quantity_per_box : null)
     addBrak(values);
   };
 

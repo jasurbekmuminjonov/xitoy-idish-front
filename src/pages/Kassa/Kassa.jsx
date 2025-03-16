@@ -114,10 +114,10 @@ const Kassa = () => {
           <td>${index + 1}</td>
           <td>${item.name}</td>
           <td>${selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null}</td>
-          <td>${item.sellingPrice.value.toFixed(2)}</td>
+          <td>${item.sellingPrice.value?.toFixed(2)}</td>
           <td>${item.currency === "USD" ? 'Доллар' : "Сум"}</td>
           <td>${promo ? `${promo.percent} ${promo.type === "percent" ? "%" : "сум"}` : "—"}</td>
-          <td>${discountedPrice.toFixed(2)}</td>
+          <td>${discountedPrice?.toFixed(2)}</td>
         </tr>
       `;
     }).join(""); // Har bir `<tr>` ni string formatiga o‘tkazib, bitta matn sifatida qo‘shib chiqarish kerak
@@ -165,8 +165,8 @@ const Kassa = () => {
             ${tableRows}
           </tbody>
         </table>
-        <b>Жами тўловнинг доллар билан тўланадиган қисми: ${totalUSD.toFixed(2)} доллар</b>
-        <b>Жами тўловнинг сyм билан тўланадиган қисми: ${totalSUM.toFixed(2)} сyм</b>
+        <b>Жами тўловнинг доллар билан тўланадиган қисми: ${totalUSD?.toFixed(2)} доллар</b>
+        <b>Жами тўловнинг сyм билан тўланадиган қисми: ${totalSUM?.toFixed(2)} сyм</b>
       </div>
     `;
 
@@ -199,10 +199,70 @@ const Kassa = () => {
   }, [products, searchText]);
 
   const productsColumn = [
-    { title: "Tovar nomi", dataIndex: "name", key: "name" },
+    {
+      title: "Tovar",
+      dataIndex: "name",
+      key: "name",
+      render: (text, record) => (
+        <div style={{ display: "flex", flexDirection: 'column' }}>
+          {record.image_url ? (
+            <img
+              src={record.image_url}
+              alt={record.name}
+              style={{ width: "100px", height: "100px", marginRight: "10px", objectFit: "contain" }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "50px",
+                height: "50px",
+                marginRight: "10px",
+                backgroundColor: "#f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Rasm yo'q
+            </div>
+          )}
+          <span>{record.name}</span>
+        </div>
+      ),
+    },
+    {
+      title: "O'lcham",
+      dataIndex: "size",
+      key: "size",
+    },
     { title: "Ombor", render: (_, record) => record.warehouse.name },
     { title: "Shtrix kod", dataIndex: "barcode" },
-    { title: "Soni", dataIndex: "quantity" },
+    {
+      title: "Umumiy vazni(kg)",
+      dataIndex: "total_kg",
+      key: "total_kg",
+      render: (text) => text?.toFixed(2)
+
+    },
+    {
+      title: "Dona soni",
+      dataIndex: "quantity",
+      key: "quantity"
+
+    },
+    {
+      title: "Karobka soni",
+      dataIndex: "box_quantity",
+      key: "box_quantity",
+      render: (text) => text?.toFixed(2)
+    },
+    {
+      title: "Pachka soni",
+      dataIndex: "package_quantity",
+      key: "package_quantity",
+      render: (text) => text?.toFixed(2)
+
+    },
     {
       title: "Sotish narxi",
       render: (_, record) => {
@@ -251,7 +311,37 @@ const Kassa = () => {
   ];
 
   const basketColumn = [
-    { title: "Tovar nomi", dataIndex: "name", key: "name" },
+    {
+      title: "Tovar",
+      dataIndex: "name",
+      key: "name",
+      render: (text, record) => (
+        <div style={{ display: "flex", flexDirection: 'column' }}>
+          {record.image_url ? (
+            <img
+              src={record.image_url}
+              alt={record.name}
+              style={{ width: "100px", height: "100px", marginRight: "10px", objectFit: "contain" }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "50px",
+                height: "50px",
+                marginRight: "10px",
+                backgroundColor: "#f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Rasm yo'q
+            </div>
+          )}
+          <span>{record.name}</span>
+        </div>
+      ),
+    },
     { title: "Ombor", render: (_, record) => record.warehouse.name },
     { title: "Shtrix kod", dataIndex: "barcode" },
     {
@@ -411,9 +501,9 @@ const Kassa = () => {
               productId: item._id,
               quantity: selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null,
               unit: selectedUnit,
-              totalAmount: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2) * selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null,
+              totalAmount: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null)?.toFixed(2) * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2),
               currency: item.currency,
-              sellingPrice: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2),
+              sellingPrice: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null)?.toFixed(2),
               paymentMethod,
               warehouseId: item.warehouse._id,
               discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
@@ -431,7 +521,7 @@ const Kassa = () => {
               currency: item.currency,
               discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
               quantity: selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null,
-              sellingPrice: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null).toFixed(2),
+              sellingPrice: getDiscountedPrice(item.sellingPrice.value, selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null)?.toFixed(2),
               warehouseId: item.warehouse._id,
               paymentMethod,
             }).unwrap()
@@ -479,7 +569,7 @@ const Kassa = () => {
         </div>
         <Table
           size="small"
-          style={{ maxHeight: "100%" }}
+          style={{ overflow: "auto", minWidth: "100%", maxHeight: "100%" }}
           pagination={{ pageSize: 4 }}
           columns={productsColumn}
           dataSource={filteredProducts}
@@ -490,7 +580,7 @@ const Kassa = () => {
         <div className="basket">
           <Table
             size="small"
-            style={{ maxHeight: "100%" }}
+            style={{ overflow: "auto", minWidth: "100%", maxHeight: "100%" }}
             pagination={{ pageSize: 5 }}
             columns={basketColumn}
             dataSource={basket}
@@ -511,7 +601,7 @@ const Kassa = () => {
               .reduce(
                 (acc, item) => acc + item.sellingPrice.value * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null),
                 0
-              ).toFixed(2)
+              )?.toFixed(2)
               ?.toLocaleString()}$
           </p>
           <Button type="primary" onClick={() => setIsModalVisible(true)}>
@@ -789,10 +879,10 @@ export default Kassa;
 //       item.unit || "-",
 //       item.size || "-",
 //       item.quantity,
-//       item.sellingPrice.value.toFixed(2),
-//       paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent.toFixed(2) : 0,
+//       item.sellingPrice.value?.toFixed(2),
+//       paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent?.toFixed(2) : 0,
 //       item.currency,
-//       totalAmount.toFixed(2),
+//       totalAmount?.toFixed(2),
 //     ];
 //   });
 
