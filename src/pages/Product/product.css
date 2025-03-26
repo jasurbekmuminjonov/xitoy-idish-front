@@ -1,0 +1,74 @@
+/* Product.css */
+.page_header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     padding: 16px;
+     background: #fff;
+     border-bottom: 1px solid #f0f0f0;
+}
+
+.page_header .ant-space {
+     display: flex;
+     gap: 12px;
+     /* Расстояние между кнопкой и полями ввода */
+     align-items: center;
+}
+
+.page_header .ant-btn {
+     height: 32px;
+     /* Высота кнопки для выравнивания с полями ввода */
+}
+
+.page_header .ant-input {
+     width: 200px;
+     /* Фиксированная ширина полей ввода */
+     height: 32px;
+     /* Высота для一致 с кнопкой */
+}
+
+.stats {
+     text-align: right;
+}
+
+.stats p {
+     margin: 0;
+     font-size: 14px;
+     color: #555;
+     line-height: 1.5;
+}
+
+/* Стили для таблицы */
+.ant-table {
+     overflow: auto;
+     min-width: 100%;
+}
+
+.table_actions {
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+     /* Расстояние между кнопками в колонке действий */
+}
+
+
+/* Стили для модального окна */
+.ant-modal-content {
+     padding: 24px;
+}
+
+.ant-form-vertical .ant-form-item {
+     margin-bottom: 16px;
+}
+
+/* Стили для изображения в таблице */
+.ant-table-cell img {
+     max-width: 100px;
+     max-height: 100px;
+     object-fit: contain;
+}
+
+/* Скрытие элемента печати штрих-кода */
+div[style*="display: none"] {
+     display: none !important;
+}

@@ -10,19 +10,24 @@ import {
   Popconfirm,
   Upload,
   Switch,
+  Space,
 } from "antd";
 import { useReactToPrint } from "react-to-print";
 import Barcode from "react-barcode";
+
 import {
   useAddProductMutation,
   useDeleteProductMutation,
   useGetProductsQuery,
   useUpdateProductMutation,
 } from "../../context/service/product.service";
+
+
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
 import { MdEdit, MdDeleteForever, MdPrint } from "react-icons/md";
 import axios from "axios";
 import { FaArrowRight, FaUpload } from "react-icons/fa";
+import "./product.css";
 
 const { Option } = Select;
 
@@ -39,31 +44,25 @@ const BarcodePrint = React.forwardRef(({ barcode }, ref) => (
 const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
-  const [editProduct] = useUpdateProductMutation();
   const [editingProduct, setEditingProduct] = useState("");
-  const { data: products = [], isLoading: productsLoading } =
-    useGetProductsQuery();
-  const { data: warehouses = [], isLoading: warehousesLoading } =
-    useGetWarehousesQuery();
+  const { data: products = [], isLoading: productsLoading } = useGetProductsQuery();
+  const { data: warehouses = [], isLoading: warehousesLoading } = useGetWarehousesQuery();
   const [addProduct] = useAddProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
+  const [editProduct, { isLoading: isUpdating, error: updateError }] = useUpdateProductMutation();
   const [currentBarcode, setCurrentBarcode] = useState(null);
-  const [option1, setOption1] = useState("");
-  const [option2, setOption2] = useState("");
-  const [option3, setOption3] = useState("");
-  const [option4, setOption4] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isPackage, setIsPackage] = useState(true);
+  const [searchName, setSearchName] = useState("");
+  const [searchBarcode, setSearchBarcode] = useState("");
+
   const handleUpload = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
     formData.append("key", "65384e0beb6c45b817d791e806199b7e");
 
     try {
-      const response = await axios.post(
-        "https://api.imgbb.com/1/upload",
-        formData
-      );
+      const response = await axios.post("https://api.imgbb.com/1/upload", formData);
       const url = response.data.data.url;
       setImageUrl(url);
       message.success("Rasm muvaffaqiyatli yuklandi!");
@@ -72,6 +71,7 @@ const Product = () => {
       message.error("Rasmni yuklashda xatolik yuz berdi.");
     }
   };
+
   const printRef = useRef();
 
   useEffect(() => {
@@ -80,9 +80,15 @@ const Product = () => {
     }
   }, [currentBarcode]);
 
+  useEffect(() => {
+    if (updateError) {
+      message.error("Mahsulotni tahrirlashda xatolik yuz berdi!");
+      console.error("Update error:", updateError);
+    }
+  }, [updateError]);
+
   const handleAddProduct = () => {
     setModalVisible(true);
-
   };
 
   const handleCancel = () => {
@@ -97,34 +103,37 @@ const Product = () => {
         const newBarcode = generateBarcode();
         setCurrentBarcode(newBarcode);
         values.barcode = newBarcode;
-        values.isPackage = isPackage
+        values.isPackage = isPackage;
       }
-      values.image_url = imageUrl
+      values.image_url = imageUrl;
 
       const total_kg = Number(values.total_kg)?.toFixed(2);
       values.kg_per_box = (total_kg / Number(values.box_quantity))?.toFixed(2);
-      values.kg_per_package = isPackage ? (total_kg / Number(values.package_quantity))?.toFixed(2) : null;
+      values.kg_per_package = isPackage
+        ? (total_kg / Number(values.package_quantity))?.toFixed(2)
+        : null;
       values.kg_per_quantity = (total_kg / Number(values.quantity))?.toFixed(2);
+
       if (editingProduct) {
         await editProduct({
           id: editingProduct,
           data: values,
-        });
+        }).unwrap();
+        message.success("Mahsulot muvaffaqiyatli tahrirlandi!");
       } else {
         await addProduct(values).unwrap();
+        message.success("Mahsulot muvaffaqiyatli qo'shildi!");
       }
       form.resetFields();
       setEditingProduct("");
       setModalVisible(false);
       setImageUrl("");
-      message.success("Product added successfully");
     } catch (error) {
-      if (
-        error.data?.message?.includes("E11000 duplicate key error collection")
-      ) {
+      if (error.data?.message?.includes("E11000 duplicate key error collection")) {
         message.error("Barcode must be unique");
       } else {
-        message.error("Failed to add product");
+        message.error("Mahsulotni qo'shishda xatolik yuz berdi!");
+        console.error("Error:", error);
       }
     }
   };
@@ -140,12 +149,17 @@ const Product = () => {
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
-        <div style={{ display: "flex", flexDirection: 'column' }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {record.image_url ? (
             <img
               src={record.image_url}
               alt={record.name}
-              style={{ width: "100px", height: "100px", marginRight: "10px", objectFit: "contain" }}
+              style={{
+                width: "100px",
+                height: "100px",
+                marginRight: "10px",
+                objectFit: "contain",
+              }}
             />
           ) : (
             <div
@@ -180,26 +194,24 @@ const Product = () => {
       title: "Umumiy vazni(kg)",
       dataIndex: "total_kg",
       key: "total_kg",
-      render: (text) => text?.toFixed(2)
-
+      render: (text) => text?.toFixed(2),
     },
     {
       title: "Dona soni",
       dataIndex: "quantity",
-      key: "quantity"
-
+      key: "quantity",
     },
     {
       title: "Karobka soni",
       dataIndex: "box_quantity",
       key: "box_quantity",
-      render: (text) => text?.toFixed(2)
+      render: (text) => text?.toFixed(2),
     },
     {
       title: "Pachka soni",
       key: "package_quantity",
-      render: (_, record) => record?.isPackage ? record?.package_quantity?.toFixed(2) : "-"
-
+      render: (_, record) =>
+        record?.isPackage ? record?.package_quantity?.toFixed(2) : "-",
     },
     {
       title: "Valyuta",
@@ -237,12 +249,17 @@ const Product = () => {
     {
       title: "Amallar",
       render: (_, record) => (
-        <div className="table_actions" style={{ flexDirection: 'column' }}>
+        <div className="table_actions" style={{ flexDirection: "column" }}>
           <Button
             type="primary"
             onClick={() => {
               setEditingProduct(record._id);
-              form.setFieldsValue({ ...record, barcode: record.barcode, package_quantity: record.package_quantity?.toFixed(2), box_quantity: record.box_quantity?.toFixed(2) });
+              form.setFieldsValue({
+                ...record,
+                barcode: record.barcode,
+                package_quantity: record.package_quantity?.toFixed(2),
+                box_quantity: record.box_quantity?.toFixed(2),
+              });
               setImageUrl(record.image_url);
               setModalVisible(true);
             }}
@@ -271,16 +288,43 @@ const Product = () => {
     },
   ];
 
+  const filteredProducts = products.filter((product) => {
+    const matchesName = product.name
+      .toLowerCase()
+      .includes(searchName.toLowerCase());
+    const matchesBarcode = product.barcode
+      ?.toLowerCase()
+      .includes(searchBarcode.toLowerCase());
+    return (
+      (searchName ? matchesName : true) &&
+      (searchBarcode ? matchesBarcode : true)
+    );
+  });
+
   return (
     <div style={{ background: "#fff" }}>
       <div className="page_header">
-        <Button
-          type="primary"
-          onClick={handleAddProduct}
-          style={{ marginBottom: 16 }}
-        >
-          Tovar qo'shish
-        </Button>
+        <Space>
+          <Button
+            type="primary"
+            onClick={handleAddProduct}
+            style={{ marginBottom: 1 }}
+          >
+            Tovar qo'shish
+          </Button>
+          <Input
+            placeholder="Tovar nomini kiriting"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            style={{ width: 200 }}
+          />
+          <Input
+            placeholder="Shtrix kodni kiriting"
+            value={searchBarcode}
+            onChange={(e) => setSearchBarcode(e.target.value)}
+            style={{ width: 200 }}
+          />
+        </Space>
         <div className="stats">
           <p>
             Umumiy tovar soni: {products.reduce((a, b) => a + b.quantity, 0)}
@@ -314,14 +358,14 @@ const Product = () => {
 
       <Table
         columns={columns}
-        dataSource={products}
+        dataSource={filteredProducts}
         loading={productsLoading}
         style={{ overflow: "auto", minWidth: "100%" }}
         rowKey="_id"
       />
 
       <Modal
-        title="Add Product"
+        title={editingProduct ? "Tovar tahrirlash" : "Tovar qo'shish"}
         visible={modalVisible}
         onCancel={handleCancel}
         footer={null}
@@ -330,9 +374,7 @@ const Product = () => {
           <Form.Item
             name="name"
             label="Tovar nomi"
-            rules={[
-              { required: true, message: "Please input the product name!" },
-            ]}
+            rules={[{ required: true, message: "Tovar nomini kiriting!" }]}
           >
             <Input placeholder="Tovar nomi" />
           </Form.Item>
@@ -351,180 +393,42 @@ const Product = () => {
             <Input placeholder="Kod" type="text" />
           </Form.Item>
           <Form.Item label="Tan narxi" name={["purchasePrice", "value"]}>
-            <Input placeholder="Tan narxi" />
+            <Input placeholder="Tan narxi" type="number" />
           </Form.Item>
           <Form.Item label="Sotish narxi" name={["sellingPrice", "value"]}>
-            <Input placeholder="Sotish narxi" />
+            <Input placeholder="Sotish narxi" type="number" />
           </Form.Item>
-          {/* <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption1(value)} value={option1}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option1}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption2(value)} value={option2}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option2}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption3(value)} value={option3}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option3}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div style={{ marginBottom: "6px", width: "100%", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-            <Select placeholder="O'lchov birlik" style={{ width: "150px" }} onChange={(value) => setOption4(value)} value={option4}>
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item
-              name={option4}
-            >
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div> */}
-          <Form.Item label="Umumiy vazni" name={"total_kg"}>
-            <Input placeholder="Umumiy vazni(kg)" />
+          <Form.Item label="Umumiy vazni" name="total_kg">
+            <Input placeholder="Umumiy vazni(kg)" type="number" />
           </Form.Item>
-          <Form.Item label="Dona miqdori" name={"quantity"}>
-            <Input placeholder="Dona miqdori" />
+          <Form.Item label="Dona miqdori" name="quantity">
+            <Input placeholder="Dona miqdori" type="number" />
           </Form.Item>
-          <Form.Item label="Pachka miqdori" name={"package_quantity"}>
-            <Input disabled={!isPackage} placeholder="Pachka miqdori" />
+          <Form.Item label="Pachka miqdori" name="package_quantity">
+            <Input disabled={!isPackage} placeholder="Pachka miqdori" type="number" />
           </Form.Item>
-          <Form.Item label="1 pachkadagi dona miqdori" name={"quantity_per_package"}>
-            <Input disabled={!isPackage} placeholder="1 pachkadagi dona miqdori" />
+          <Form.Item label="1 pachkadagi dona miqdori" name="quantity_per_package">
+            <Input disabled={!isPackage} placeholder="1 pachkadagi dona miqdori" type="number" />
           </Form.Item>
-          <Form.Item label="Karobka miqdori" name={"box_quantity"}>
-            <Input placeholder="Karobka miqdori" />
+          <Form.Item label="Karobka miqdori" name="box_quantity">
+            <Input placeholder="Karobka miqdori" type="number" />
           </Form.Item>
-          <Form.Item label={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} name={"package_quantity_per_box"}>
-            <Input placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} />
+          <Form.Item label={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} name="package_quantity_per_box">
+            <Input placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} type="number" />
           </Form.Item>
           <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", justifyContent: "start" }}>
-            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>Karobka <FaArrowRight /> Dona</p>
-
-            <Switch style={{ marginBottom: "12px" }} value={isPackage} onChange={(checked) => setIsPackage(checked)}></Switch>
-            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>Karobka <FaArrowRight /> Pachka <FaArrowRight /> Dona</p>
-
+            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              Karobka <FaArrowRight /> Dona
+            </p>
+            <Switch
+              style={{ marginBottom: "12px" }}
+              checked={isPackage}
+              onChange={(checked) => setIsPackage(checked)}
+            />
+            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              Karobka <FaArrowRight /> Pachka <FaArrowRight /> Dona
+            </p>
           </div>
-
-          {/* <Form.Item
-            name="currency"
-          >
-            <Select
-              placeholder="O'lchov birlik"
-              style={{ width: "150px" }}
-              onChange={(value) => setOption1(value)}
-              value={option1}
-            >
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item name={option1}>
-              <Input placeholder="Miqdor" />
-            </Form.Item> */}
-          {/* </div>
-          <div
-            style={{
-              marginBottom: "6px",
-              width: "100%",
-              display: "flex",
-              alignItems: "start",
-              justifyContent: "space-between",
-            }}
-          >
-            <Select
-              placeholder="O'lchov birlik"
-              style={{ width: "150px" }}
-              onChange={(value) => setOption2(value)}
-              value={option2}
-            >
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item name={option2}>
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div
-            style={{
-              marginBottom: "6px",
-              width: "100%",
-              display: "flex",
-              alignItems: "start",
-              justifyContent: "space-between",
-            }}
-          >
-            <Select
-              placeholder="O'lchov birlik"
-              style={{ width: "150px" }}
-              onChange={(value) => setOption3(value)}
-              value={option3}
-            >
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item name={option3}>
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div>
-          <div
-            style={{
-              marginBottom: "6px",
-              width: "100%",
-              display: "flex",
-              alignItems: "start",
-              justifyContent: "space-between",
-            }}
-          >
-            <Select
-              placeholder="O'lchov birlik"
-              style={{ width: "150px" }}
-              onChange={(value) => setOption4(value)}
-              value={option4}
-            >
-              <Option value="kg_quantity">Kilogram</Option>
-              <Option value="quantity">Dona</Option>
-              <Option value="box_quantity">Karobka</Option>
-              <Option value="package_quantity">Pachka</Option>
-            </Select>
-            <Form.Item name={option4}>
-              <Input placeholder="Miqdor" />
-            </Form.Item>
-          </div> */}
-
           <Form.Item label="Valyuta" name="currency">
             <Select placeholder="Valyuta tanlash">
               <Option value="">Keyin kiritish</Option>
@@ -535,9 +439,7 @@ const Product = () => {
           <Form.Item
             label="Ombor"
             name="warehouse"
-            rules={[
-              { required: true, message: "Please select the warehouse!" },
-            ]}
+            rules={[{ required: true, message: "Ombor tanlang!" }]}
           >
             <Select placeholder="Ombor tanlash" loading={warehousesLoading}>
               {warehouses.map((warehouse) => (
@@ -550,7 +452,7 @@ const Product = () => {
           <Form.Item
             label="Kategoriya"
             name="category"
-            rules={[{ required: true, message: "Please input the category!" }]}
+            rules={[{ required: true, message: "Kategoriyani kiriting!" }]}
           >
             <Input placeholder="Kategoriya" />
           </Form.Item>
@@ -558,7 +460,6 @@ const Product = () => {
             <Input />
           </Form.Item>
           <Upload
-
             customRequest={({ file }) => handleUpload(file)}
             showUploadList={false}
           >
@@ -579,19 +480,18 @@ const Product = () => {
               </div>
             )}
           </Form.Item>
-
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              Tovar qo'shish
+              {editingProduct ? "Tahrirlash" : "Tovar qo'shish"}
             </Button>
           </Form.Item>
-        </Form >
-      </Modal >
+        </Form>
+      </Modal>
 
       <div style={{ display: "none" }}>
         <BarcodePrint ref={printRef} barcode={currentBarcode} />
       </div>
-    </div >
+    </div>
   );
 };
 

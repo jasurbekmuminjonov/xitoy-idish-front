@@ -12,28 +12,34 @@ const Sales = () => {
     productCode: "",
     paymentMethod: "",
     dateRange: [],
-    selectedClient: ""
+    selectedClient: "",
   });
-  const [filteredSales, setFilteredSales] = useState([])
+  const [filteredSales, setFilteredSales] = useState([]);
+
   useEffect(() => {
-    setFilteredSales(sales.filter((sale) => {
-      const matchesProductName = sale.productId?.name?.toLowerCase()
-        .includes(filters.productName?.toLowerCase());
+    setFilteredSales(
+      sales.filter((sale) => {
+        const matchesProductName = sale.productId?.name
+          ?.toLowerCase()
+          .includes(filters.productName?.toLowerCase());
 
-      const matchesProductCode = sale.productId?.code?.toLowerCase()
-        .includes(filters.productCode?.toLowerCase());
-      const matchesClient = filters.selectedClient ? sale.clientId._id === filters.selectedClient : true;
+        const matchesProductCode = sale.productId?.code
+          ?.toLowerCase()
+          .includes(filters.productCode?.toLowerCase());
+        const matchesClient = filters.selectedClient
+          ? sale.clientId?._id === filters.selectedClient
+          : true;
 
-      const matchesPaymentMethod =
-        !filters.paymentMethod || sale.paymentMethod === filters.paymentMethod;
-      const matchesDateRange =
-        !filters.dateRange.length ||
-        (moment(sale.createdAt).isSameOrAfter(moment(filters.dateRange[0]), "day") &&
-          moment(sale.createdAt).isSameOrBefore(moment(filters.dateRange[1]), "day"));
-      return matchesProductName && matchesProductCode && matchesPaymentMethod && matchesDateRange && matchesClient;
-    }))
-  }, [filters, sales])
-
+        const matchesPaymentMethod =
+          !filters.paymentMethod || sale.paymentMethod === filters.paymentMethod;
+        const matchesDateRange =
+          !filters.dateRange.length ||
+          (moment(sale.createdAt).isSameOrAfter(moment(filters.dateRange[0]), "day") &&
+            moment(sale.createdAt).isSameOrBefore(moment(filters.dateRange[1]), "day"));
+        return matchesProductName && matchesProductCode && matchesPaymentMethod && matchesDateRange && matchesClient;
+      })
+    );
+  }, [filters, sales]);
 
   const columns = [
     { title: "Mijoz ismi", dataIndex: ["clientId", "name"], key: "clientId" },
@@ -46,19 +52,27 @@ const Sales = () => {
     {
       title: "Sotib olish narxi",
       key: "purchasePrice",
-      render: (_, record) => `${record.productId.purchasePrice.value} ${record.productId.currency}`,
+      render: (_, record) =>
+        `${record.productId?.purchasePrice?.value || 0} ${record.productId?.currency || "N/A"}`,
     },
     {
       title: "Sotish narxi",
       dataIndex: "sellingPrice",
+      render: (value) => (value ? `${value.toFixed(2)}` : "0.00"),
     },
     {
       title: "To'lov(so'm)",
-      render: (_, record) => `${(record.payment.sum)?.toFixed(2)} so'm`,
+      render: (_, record) => {
+        const sum = record.payment?.sum;
+        return sum !== undefined && sum !== null ? `${sum.toFixed(2)} so'm` : "0.00 so'm";
+      },
     },
     {
       title: "To'lov($)",
-      render: (_, record) => `${(record.payment.usd)?.toFixed(2)}$`,
+      render: (_, record) => {
+        const usd = record.payment?.usd;
+        return usd !== undefined && usd !== null ? `${usd.toFixed(2)}$` : "0.00$";
+      },
     },
     {
       title: "Sotish sanasi",
@@ -67,7 +81,6 @@ const Sales = () => {
       render: (text) => moment(text).format("DD.MM.YYYY HH:mm"),
     },
   ];
-
 
   if (isLoading) {
     return <div>Yuklanmoqda...</div>;
@@ -88,14 +101,16 @@ const Sales = () => {
             placeholder="Mahsulot kodi"
             onChange={(e) => setFilters({ ...filters, productCode: e.target.value })}
           />
-          <Select style={{ width: "150px" }} onChange={(value) => setFilters({ ...filters, selectedClient: value })}>
+          <Select
+            style={{ width: "150px" }}
+            onChange={(value) => setFilters({ ...filters, selectedClient: value })}
+          >
             <Select.Option value="">Barchasi</Select.Option>
             {clients.map((client) => (
               <Select.Option key={client._id} value={client._id}>
                 {client.name}
               </Select.Option>
             ))}
-
           </Select>
           <Select
             style={{ width: "150px" }}
@@ -117,11 +132,10 @@ const Sales = () => {
               }
             }}
           />
-
         </div>
       </div>
       <Table columns={columns} dataSource={filteredSales} rowKey="_id" />
-    </div >
+    </div>
   );
 };
 

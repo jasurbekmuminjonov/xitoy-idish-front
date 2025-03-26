@@ -23,6 +23,7 @@ import {
 } from "../../context/service/ombor.service";
 import { useGetProductsByWarehouseQuery } from "../../context/service/product.service";
 import "./Ombor.css";
+
 export default function Ombor() {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -39,6 +40,10 @@ export default function Ombor() {
       skip: !selectedWarehouse,
     }
   );
+
+  // Состояния для поиска
+  const [searchName, setSearchName] = useState("");
+  const [searchBarcode, setSearchBarcode] = useState("");
 
   const showAddModal = () => {
     setIsAddModalVisible(true);
@@ -119,11 +124,15 @@ export default function Ombor() {
   const handleViewProducts = (warehouse) => {
     setSelectedWarehouse(warehouse);
     setIsProductsModalVisible(true);
+    setSearchName(""); // Сброс поиска при открытии
+    setSearchBarcode("");
   };
 
   const handleProductsModalCancel = () => {
     setIsProductsModalVisible(false);
     setSelectedWarehouse(null);
+    setSearchName(""); // Сброс поиска при закрытии
+    setSearchBarcode("");
   };
 
   const columns = [
@@ -174,7 +183,7 @@ export default function Ombor() {
     {
       title: "Soni",
       dataIndex: "quantity",
-      key: "quantity ",
+      key: "quantity",
     },
     {
       title: "Birlik",
@@ -206,6 +215,20 @@ export default function Ombor() {
       key: "barcode",
     },
   ];
+
+  // Фильтрация продуктов по названию и штрих-коду
+  const filteredProducts = products.filter((product) => {
+    const matchesName = product.name
+      .toLowerCase()
+      .includes(searchName.toLowerCase());
+    const matchesBarcode = product.barcode
+      ?.toLowerCase()
+      .includes(searchBarcode.toLowerCase());
+    return (
+      (searchName ? matchesName : true) &&
+      (searchBarcode ? matchesBarcode : true)
+    );
+  });
 
   return (
     <div>
@@ -284,7 +307,25 @@ export default function Ombor() {
         footer={null}
         width="80%"
       >
-        <Table columns={productColumns} dataSource={products} rowKey="_id" />
+        <Space style={{ marginBottom: 16 }}>
+          <Input
+            placeholder="Mahsulot nomini kiriting"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            style={{ width: 200 }}
+          />
+          <Input
+            placeholder="Shtrix kodni kiriting"
+            value={searchBarcode}
+            onChange={(e) => setSearchBarcode(e.target.value)}
+            style={{ width: 200 }}
+          />
+        </Space>
+        <Table
+          columns={productColumns}
+          dataSource={filteredProducts}
+          rowKey="_id"
+        />
       </Modal>
     </div>
   );

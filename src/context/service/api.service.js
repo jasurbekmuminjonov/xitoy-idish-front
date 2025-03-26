@@ -1,33 +1,37 @@
+// context/service/api.service.js
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// Create a base query instance for Redux Toolkit Query
+// Настройка базового запроса для RTK Query
 const baseQuery = fetchBaseQuery({
-  baseUrl: "https://xitoy-idish-server.vercel.app/api",
-  // baseUrl:'http://localhost:8080/api', 
+  baseUrl: "http://localhost:8080/api", // Локальный сервер (для продакшена можно заменить на https://xitoy-idish-server.vercel.app/api)
 
-
+  // Добавление токена авторизации в заголовки запроса
   prepareHeaders: (headers, { getState }) => {
     const token = localStorage.getItem("access_token");
-
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
     return headers;
   },
 });
-// if token expired or not valid - reauth user (Unauthorization error)
+
+// Обработка ошибок авторизации (401 Unauthorized)
 export const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
   if (result?.error && result?.error?.status === 401) {
+    // Очистка хранилища при истёкшем или недействительном токене
     localStorage.clear();
     sessionStorage.clear();
-    // return window.location.reload();
+    // Перезагрузка страницы для перенаправления на страницу логина
+    window.location.reload();
   }
   return result;
 };
-const obj = {}
-// Create an auto-generated hooks for each endpoint
+
+// Создание API Slice с использованием RTK Query
 export const apiSlice = createApi({
-  reducerPath: "api",
-  baseQuery: baseQueryWithReauth,
-  tagTypes: ["update", "device", "Product", "Sale"],
-  endpoints: (builder) => ({}),
+  reducerPath: "api", // Путь редьюсера в Redux store
+  baseQuery: baseQueryWithReauth, // Кастомный baseQuery с обработкой ошибок
+  tagTypes: ["update", "device", "Product", "Sale", "ProductPartner"], // Теги для управления кэшем
+  endpoints: (builder) => ({}), // Пустые эндпоинты, так как они добавляются через injectEndpoints
 });

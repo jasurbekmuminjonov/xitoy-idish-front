@@ -99,7 +99,6 @@ const Kassa = () => {
       { totalUSD: 0, totalSUM: 0 }
     );
 
-
     const tableRows = basket.map((item, index) => {
       const promo = promos.find(p => p._id === paymentDiscount);
       const totalPrice = item.sellingPrice.value * (selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null);
@@ -110,76 +109,80 @@ const Kassa = () => {
         : totalPrice;
 
       return `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${item.name}</td>
-          <td>${selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null}</td>
-          <td>${item.sellingPrice.value?.toFixed(2)}</td>
-          <td>${item.currency === "USD" ? 'Доллар' : "Сум"}</td>
-          <td>${promo ? `${promo.percent} ${promo.type === "percent" ? "%" : "сум"}` : "—"}</td>
-          <td>${discountedPrice?.toFixed(2)}</td>
-        </tr>
-      `;
-    }).join(""); // Har bir `<tr>` ni string formatiga o‘tkazib, bitta matn sifatida qo‘shib chiqarish kerak
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.name}</td>
+        <td>${item.size || "-"}</td> <!-- Добавляем размер -->
+        <td>${item.code || "-"}</td>
+        <td>${selectedUnit === "quantity" ? item.quantity : selectedUnit === "package_quantity" ? item.quantity * item.quantity_per_package : selectedUnit === "box_quantity" ? item.quantity * item.quantity_per_package * item.package_quantity_per_box : null}</td>
+        <td>${item.sellingPrice.value?.toFixed(2)}</td>
+        <td>${item.currency === "USD" ? 'Доллар' : "Сум"}</td>
+        <td>${promo ? `${promo.percent} ${promo.type === "percent" ? "%" : "сум"}` : "—"}</td>
+        <td>${discountedPrice?.toFixed(2)}</td>
+      </tr>
+    `;
+    }).join("");
 
     const content = `
-      <div style="width:210mm; height:297mm; display:flex; flex-direction:column; gap:6px; padding:12px; font-family:sans-serif">
-        <b style="display:flex; text-align:center; width:100%; justify-content:center; font-size:sans-serif">
-          ${moment().format("DD.MM.YYYY")} даги Хисобварак-фактура
-        </b><br />
-        <div style="display:flex; width:100%; background:red">
-          <div style="display:flex; flex-direction:column; gap:6px; width:50%; background:green">
-            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between; background:yellow">
-              <b>Етказиб берувчи:</b>
-              <p>"BANKERSUZ GROUP" MCHJ</p>
-            </div>
-            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
-              <b>Манзил:</b>
-              <p>ГОРОД ТАШКEНТ УЛИЦА НАВОИЙ 16-А</p>
-            </div>
+    <div style="width:210mm; height:297mm; display:flex; flex-direction:column; gap:6px; padding:12px; font-family:sans-serif">
+      <b style="display:flex; text-align:center; width:100%; justify-content:center; font-size:sans-serif">
+        ${moment().format("DD.MM.YYYY")} даги Хисобварак-фактура
+      </b><br />
+      <div style="display:flex; width:100%;">
+        <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
+          <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between;">
+            <b>Етказиб берувчи:</b>
+            <p>"BANKERSUZ GROUP" MCHJ</p>
           </div>
-          <div>
-            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
-              <b>Сотиб олувчи:</b>
-              <p>${clientName}</p>
-            </div>
-            <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
-              <b>Манзил:</b>
-              <p>${clientAddress}</p>
-            </div>
+          <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
+            <b>Манзил:</b>
+            <p>ГОРОД ТАШКEНТ УЛИЦА НАВОИЙ 16-А</p>
           </div>
         </div>
-        <table border="1" style="border-collapse: collapse; width: 100%;">
-          <thead>
-            <tr>
-              <td>No</td>
-              <td>Махсулот номи</td>
-              <td>Миқдор</td>
-              <td>Нарх</td>
-              <td>Валюта</td>
-              <td>Чегирма</td>
-              <td>Умумий сумма</td>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-        <b>Жами тўловнинг доллар билан тўланадиган қисми: ${totalUSD?.toFixed(2)} доллар</b>
-        <b>Жами тўловнинг сyм билан тўланадиган қисми: ${totalSUM?.toFixed(2)} сyм</b>
+        <div>
+          <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
+            <b>Сотиб олувчи:</b>
+            <p>${clientName}</p>
+          </div>
+          <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between">
+            <b>Манзил:</b>
+            <p>${clientAddress}</p>
+          </div>
+        </div>
       </div>
-    `;
+      <table border="1" style="border-collapse: collapse; width: 100%;">
+        <thead>
+          <tr>
+            <td>No</td>
+            <td>Махсулот номи</td>
+            <td>Улчам</td> 
+            <td>Код</td>
+            <td>Миқдор</td>
+            <td>Нарх</td>
+            <td>Валюта</td>
+            <td>Чегирма</td>
+            <td>Умумий сумма</td>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+      <b>Жами тўловнинг доллар билан тўланадиган қисми: ${totalUSD?.toFixed(2)} доллар</b>
+      <b>Жами тўловнинг сyм билан тўланадиган қисми: ${totalSUM?.toFixed(2)} сyм</b>
+    </div>
+  `;
 
     printWindow.document.write(`
-      <html>
-        <head>
-          <title>Хисобварак-фактура</title>
-        </head>
-        <body>
-          ${content}
-        </body>
-      </html>
-    `);
+    <html>
+      <head>
+        <title>Хисобварак-фактура</title>
+      </head>
+      <body>
+        ${content}
+      </body>
+    </html>
+  `);
     printWindow.document.close();
     printWindow.print();
     printWindow.close();

@@ -27,8 +27,10 @@ import Brak from "../Brak/Brak";
 import Expense from "../Rasxod/Expense";
 import { LuTicketPercent } from "react-icons/lu";
 import Promo from "../promo/Promo";
-import Hisobot from "../hisobot/hisobot";
+// import Hisobot from "../hisobot/hisobot";
 import Statistika from "../statistika/statistika";
+import Investitsiya from "../investment/Investitsiya";
+import Partner from "../partner/Partner";
 
 const { Header, Sider, Content } = Layout;
 
@@ -50,6 +52,8 @@ export default function Home() {
         return <Ombor />;
       case "product":
         return <Product />;
+      case "partner":
+        return <Partner />;
       case "kassa":
         return <Kassa />;
       case "client":
@@ -66,7 +70,7 @@ export default function Home() {
         return <Expense />;
       case "home":
       default:
-        return <Hisobot />;
+        return <Investitsiya />;
     }
   };
 
@@ -96,11 +100,14 @@ export default function Home() {
           <Menu.Item key="product" icon={<ShoppingOutlined />}>
             Mahsulotlar
           </Menu.Item>
+          <Menu.Item key="partner" icon={<ShoppingOutlined />}>
+            Xamkor 
+          </Menu.Item>
           <Menu.Item key="kassa" icon={<DollarOutlined />}>
             Kassa
           </Menu.Item>
           <Menu.Item key="client" icon={<TeamOutlined />}>
-            Clientlar
+            Xaridorlar
           </Menu.Item>
           <Menu.Item key="debtors" icon={<CreditCardOutlined />}>
             Qarzdorlar
