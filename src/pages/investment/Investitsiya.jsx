@@ -8,8 +8,9 @@ import { useGetAllDebtorsQuery } from "../../context/service/debt.service";
 import { useGetProductsQuery } from "../../context/service/product.service";
 import { useGetExpensesQuery } from "../../context/service/expense.service";
 import { DollarOutlined, ShoppingCartOutlined, CreditCardOutlined, CalendarOutlined, RiseOutlined, HomeOutlined } from "@ant-design/icons";
-import moment from "moment";
 import "./investment.css";
+
+
 
 const cardGradients = [
      "linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)",
@@ -24,7 +25,6 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
      const { data: mahsulotlar = [] } = useGetProductsByWarehouseQuery(ombor._id);
 
      const calculateStats = (products, warehouseSales) => {
-          // Расход (Xarajat) — стоимость текущих остатков на складе
           const purchaseUSD = products.reduce((sum, product) => {
                const quantity = Number(product.quantity) || 0;
                const purchaseValue = Number(product.purchasePrice?.value) || 0;
@@ -33,7 +33,6 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
 
           const purchaseUZS = purchaseUSD * usdRate;
 
-          // Прибыль (Foyda) — только на основе фактических продаж
           let profitUSD = 0;
           let profitUZS = 0;
 
@@ -46,22 +45,24 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
                }, 0);
 
                profitUZS = profitUSD * usdRate;
+          } else {
+               profitUSD = products.reduce((sum, product) => {
+                    const quantity = Number(product.quantity) || 0;
+                    const sellingPrice = Number(product.sellingPrice?.value) || 0;
+                    const purchasePrice = Number(product.purchasePrice?.value) || 0;
+                    return sum + (quantity * (sellingPrice - purchasePrice));
+               }, 0);
+
+               profitUZS = profitUSD * usdRate;
           }
 
-          // Остаток (Jami mavjud) — вычитаем проданное количество из текущего остатка
           const totalQuantity = products.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
-          const soldQuantity = warehouseSales.reduce((sum, sale) => sum + (Number(sale.quantity) || 0), 0);
-          const remainingQuantity = totalQuantity - soldQuantity;
 
-          // Дата — берем из sales, если есть продажи, иначе из products
-          let latestDate = "Нет продаж";
-          if (warehouseSales.length > 0) {
-               latestDate = moment(Math.max(...warehouseSales.map(sale => new Date(sale.createdAt || Date.now())))).format("DD.MM.YYYY");
-          } else if (products.length > 0) {
-               latestDate = moment(Math.max(...products.map(p => new Date(p.createdAt || Date.now())))).format("DD.MM.YYYY");
-          }
+          const latestDate = products.length > 0
+               ? new Date(Math.max(...products.map(p => new Date(p.createdAt || Date.now())))).toLocaleDateString()
+               : new Date().toLocaleDateString();
 
-          return { purchaseUZS, purchaseUSD, profitUZS, profitUSD, remainingQuantity, latestDate };
+          return { purchaseUZS, purchaseUSD, profitUZS, profitUSD, totalQuantity, latestDate };
      };
 
      const warehouseSales = sales.filter(sale => sale?.productId?.warehouse?._id === ombor._id);
@@ -83,7 +84,7 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
                headStyle={{ borderBottom: "none", fontSize: "20px", fontWeight: 700, color: "#333" }}
                extra={<Space></Space>}
           >
-               <p className="warehouse-address"><HomeOutlined /> {ombor.address}</p>
+               <p className="warehouse-address"><HomeOutlined />{ombor.address}</p>
                {stats ? (
                     <div className="warehouse-stats">
                          <div className="stat-item">
@@ -103,7 +104,7 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
                          </div>
                          <Divider style={{ margin: "10px 0", borderColor: "#e8e8e8" }} />
                          <div className="stat-item">
-                              <p><strong><ShoppingCartOutlined /> Jami (mavjud):</strong> <span className="quantity">{stats.remainingQuantity} dona</span></p>
+                              <p><strong><ShoppingCartOutlined /> Jami (mavjud):</strong> <span className="quantity">{stats.totalQuantity} dona</span></p>
                          </div>
                     </div>
                ) : (
