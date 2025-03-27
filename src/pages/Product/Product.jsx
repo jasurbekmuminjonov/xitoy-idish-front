@@ -14,15 +14,17 @@ import {
 } from "antd";
 import { useReactToPrint } from "react-to-print";
 import Barcode from "react-barcode";
-
 import {
   useAddProductMutation,
   useDeleteProductMutation,
   useGetProductsQuery,
   useUpdateProductMutation,
 } from "../../context/service/product.service";
-
-
+import {
+  useGetProductsPartnerQuery,
+  useDeleteProductPartnerMutation,
+  useUpdateProductPartnerMutation,
+} from "../../context/service/partner.service";
 import { useGetWarehousesQuery } from "../../context/service/ombor.service";
 import { MdEdit, MdDeleteForever, MdPrint } from "react-icons/md";
 import axios from "axios";
@@ -45,16 +47,26 @@ const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState("");
+  const [editingSource, setEditingSource] = useState(""); // Для определения источника продукта (product или partner)
   const { data: products = [], isLoading: productsLoading } = useGetProductsQuery();
+  const { data: partnerProducts = [], isLoading: partnerProductsLoading } = useGetProductsPartnerQuery();
   const { data: warehouses = [], isLoading: warehousesLoading } = useGetWarehousesQuery();
   const [addProduct] = useAddProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
-  const [editProduct, { isLoading: isUpdating, error: updateError }] = useUpdateProductMutation();
+  const [deleteProductPartner] = useDeleteProductPartnerMutation();
+  const [editProduct] = useUpdateProductMutation();
+  const [editProductPartner] = useUpdateProductPartnerMutation();
   const [currentBarcode, setCurrentBarcode] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [isPackage, setIsPackage] = useState(true);
   const [searchName, setSearchName] = useState("");
   const [searchBarcode, setSearchBarcode] = useState("");
+
+  // Объединяем продукты из Product и Partner
+  const allProducts = [
+    ...products.map((product) => ({ ...product, source: "product" })),
+    ...partnerProducts.map((product) => ({ ...product, source: "partner" })),
+  ];
 
   const handleUpload = async (file) => {
     const formData = new FormData();
@@ -80,20 +92,15 @@ const Product = () => {
     }
   }, [currentBarcode]);
 
-  useEffect(() => {
-    if (updateError) {
-      message.error("Mahsulotni tahrirlashda xatolik yuz berdi!");
-      console.error("Update error:", updateError);
-    }
-  }, [updateError]);
-
   const handleAddProduct = () => {
     setModalVisible(true);
+    setEditingSource("product"); // По умолчанию добавляем в Product
   };
 
   const handleCancel = () => {
     setModalVisible(false);
     setImageUrl("");
+    setEditingSource("");
     form.resetFields();
   };
 
@@ -115,17 +122,26 @@ const Product = () => {
       values.kg_per_quantity = (total_kg / Number(values.quantity))?.toFixed(2);
 
       if (editingProduct) {
-        await editProduct({
-          id: editingProduct,
-          data: values,
-        }).unwrap();
-        message.success("Mahsulot muvaffaqiyatli tahrirlandi!");
+        if (editingSource === "product") {
+          await editProduct({
+            id: editingProduct,
+            data: values,
+          }).unwrap();
+          message.success("Mahsulot muvaffaqiyatli tahrirlandi!");
+        } else if (editingSource === "partner") {
+          await editProductPartner({
+            id: editingProduct,
+            data: values,
+          }).unwrap();
+          message.success("Mahsulot muvaffaqiyatli tahrirlandi!");
+        }
       } else {
         await addProduct(values).unwrap();
         message.success("Mahsulot muvaffaqiyatli qo'shildi!");
       }
       form.resetFields();
       setEditingProduct("");
+      setEditingSource("");
       setModalVisible(false);
       setImageUrl("");
     } catch (error) {
@@ -142,6 +158,14 @@ const Product = () => {
     content: () => printRef.current,
     onAfterPrint: () => setCurrentBarcode(""),
   });
+
+  const handleDelete = async (id, source) => {
+    if (source === "product") {
+      await deleteProduct(id);
+    } else if (source === "partner") {
+      await deleteProductPartner(id);
+    }
+  };
 
   const columns = [
     {
@@ -181,10 +205,17 @@ const Product = () => {
       ),
     },
     {
+      title: "Xamkor",
+      dataIndex: "name_partner",
+      key: "name_partner",
+      render: (text) => text || "-",
+    },
+    {
       title: "Kod",
       dataIndex: "code",
       key: "code",
     },
+
     {
       title: "O'lcham",
       dataIndex: "size",
@@ -222,19 +253,19 @@ const Product = () => {
       title: "Tan narxi",
       dataIndex: "purchasePrice",
       key: "purchasePrice",
-      render: (text, record) => `${record.purchasePrice?.value}`,
+      render: (text, record) => `${record.purchasePrice?.value || "-"}`,
     },
     {
       title: "Sotish narxi",
       dataIndex: "sellingPrice",
       key: "sellingPrice",
-      render: (text, record) => `${record.sellingPrice?.value}`,
+      render: (text, record) => `${record.sellingPrice?.value || "-"}`,
     },
     {
       title: "Ombor",
       dataIndex: "warehouse",
       key: "warehouse",
-      render: (text, record) => record?.warehouse?.name,
+      render: (text, record) => record?.warehouse?.name || "-",
     },
     {
       title: "Shtrix kod",
@@ -254,6 +285,7 @@ const Product = () => {
             type="primary"
             onClick={() => {
               setEditingProduct(record._id);
+              setEditingSource(record.source);
               form.setFieldsValue({
                 ...record,
                 barcode: record.barcode,
@@ -269,7 +301,7 @@ const Product = () => {
           <Popconfirm
             title="Mahsulotni o'chirmoqchimisiz"
             onCancel={() => { }}
-            onConfirm={() => deleteProduct(record._id)}
+            onConfirm={() => handleDelete(record._id, record.source)}
             okText="O'chirish"
             cancelText="Orqaga"
           >
@@ -288,7 +320,7 @@ const Product = () => {
     },
   ];
 
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = allProducts.filter((product) => {
     const matchesName = product.name
       .toLowerCase()
       .includes(searchName.toLowerCase());
@@ -302,13 +334,13 @@ const Product = () => {
   });
 
   return (
-    <div style={{ background: "#fff" }}>
+    <div className="product-container">
       <div className="page_header">
         <Space>
           <Button
             type="primary"
             onClick={handleAddProduct}
-            style={{ marginBottom: 1 }}
+            className="product-add-button"
           >
             Tovar qo'shish
           </Button>
@@ -316,22 +348,22 @@ const Product = () => {
             placeholder="Tovar nomini kiriting"
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
-            style={{ width: 200 }}
+            className="product-search-input"
           />
           <Input
             placeholder="Shtrix kodni kiriting"
             value={searchBarcode}
             onChange={(e) => setSearchBarcode(e.target.value)}
-            style={{ width: 200 }}
+            className="product-search-input"
           />
         </Space>
         <div className="stats">
           <p>
-            Umumiy tovar soni: {products.reduce((a, b) => a + b.quantity, 0)}
+            Umumiy tovar soni: {allProducts.reduce((a, b) => a + b.quantity, 0)}
           </p>
           <p>
             Umumiy tovar tan narxi (sum):{" "}
-            {products
+            {allProducts
               .filter((p) => p.currency === "SUM")
               .reduce(
                 (acc, product) =>
@@ -343,7 +375,7 @@ const Product = () => {
           </p>
           <p>
             Umumiy tovar tan narxi ($):{" "}
-            {products
+            {allProducts
               .filter((p) => p.currency === "USD")
               .reduce(
                 (acc, product) =>
@@ -359,7 +391,7 @@ const Product = () => {
       <Table
         columns={columns}
         dataSource={filteredProducts}
-        loading={productsLoading}
+        loading={productsLoading || partnerProductsLoading}
         style={{ overflow: "auto", minWidth: "100%" }}
         rowKey="_id"
       />
@@ -369,68 +401,69 @@ const Product = () => {
         visible={modalVisible}
         onCancel={handleCancel}
         footer={null}
+        className="product-modal"
       >
-        <Form autoComplete="off" form={form} onFinish={onFinish} layout="vertical">
+        <Form autoComplete="off" form={form} onFinish={onFinish} layout="vertical" className="product-form">
           <Form.Item
             name="name"
             label="Tovar nomi"
             rules={[{ required: true, message: "Tovar nomini kiriting!" }]}
           >
-            <Input placeholder="Tovar nomi" />
+            <Input placeholder="Tovar nomi" className="product-form-input" />
           </Form.Item>
           <Form.Item
             label="Tovar o'lchami"
             name="size"
             rules={[{ required: true, message: "O'lchamni kiriting" }]}
           >
-            <Input placeholder="O'lcham" type="text" />
+            <Input placeholder="O'lcham" type="text" className="product-form-input" />
           </Form.Item>
           <Form.Item
             name="code"
             label="Tovar kodi"
             rules={[{ required: true, message: "Mahsulot kodini kiriting" }]}
           >
-            <Input placeholder="Kod" type="text" />
+            <Input placeholder="Kod" type="text" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Tan narxi" name={["purchasePrice", "value"]}>
-            <Input placeholder="Tan narxi" type="number" />
+            <Input placeholder="Tan narxi" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Sotish narxi" name={["sellingPrice", "value"]}>
-            <Input placeholder="Sotish narxi" type="number" />
+            <Input placeholder="Sotish narxi" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Umumiy vazni" name="total_kg">
-            <Input placeholder="Umumiy vazni(kg)" type="number" />
+            <Input placeholder="Umumiy vazni(kg)" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Dona miqdori" name="quantity">
-            <Input placeholder="Dona miqdori" type="number" />
+            <Input placeholder="Dona miqdori" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Pachka miqdori" name="package_quantity">
-            <Input disabled={!isPackage} placeholder="Pachka miqdori" type="number" />
+            <Input disabled={!isPackage} placeholder="Pachka miqdori" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="1 pachkadagi dona miqdori" name="quantity_per_package">
-            <Input disabled={!isPackage} placeholder="1 pachkadagi dona miqdori" type="number" />
+            <Input disabled={!isPackage} placeholder="1 pachkadagi dona miqdori" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Karobka miqdori" name="box_quantity">
-            <Input placeholder="Karobka miqdori" type="number" />
+            <Input placeholder="Karobka miqdori" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} name="package_quantity_per_box">
-            <Input placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} type="number" />
+            <Input placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} type="number" className="product-form-input" />
           </Form.Item>
-          <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", justifyContent: "start" }}>
-            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div className="product-switch">
+            <p className="product-switch-label">
               Karobka <FaArrowRight /> Dona
             </p>
             <Switch
-              style={{ marginBottom: "12px" }}
               checked={isPackage}
               onChange={(checked) => setIsPackage(checked)}
+              className="product-switch-toggle"
             />
-            <p style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <p className="product-switch-label">
               Karobka <FaArrowRight /> Pachka <FaArrowRight /> Dona
             </p>
           </div>
           <Form.Item label="Valyuta" name="currency">
-            <Select placeholder="Valyuta tanlash">
+            <Select placeholder="Valyuta tanlash" className="product-form-select">
               <Option value="">Keyin kiritish</Option>
               <Option value="USD">USD</Option>
               <Option value="SUM">SUM</Option>
@@ -441,7 +474,7 @@ const Product = () => {
             name="warehouse"
             rules={[{ required: true, message: "Ombor tanlang!" }]}
           >
-            <Select placeholder="Ombor tanlash" loading={warehousesLoading}>
+            <Select placeholder="Ombor tanlash" loading={warehousesLoading} className="product-form-select">
               {warehouses.map((warehouse) => (
                 <Option key={warehouse._id} value={warehouse._id}>
                   {warehouse?.name}
@@ -454,7 +487,7 @@ const Product = () => {
             name="category"
             rules={[{ required: true, message: "Kategoriyani kiriting!" }]}
           >
-            <Input placeholder="Kategoriya" />
+            <Input placeholder="Kategoriya" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Barkod" name="barcode" hidden>
             <Input />
@@ -463,15 +496,15 @@ const Product = () => {
             customRequest={({ file }) => handleUpload(file)}
             showUploadList={false}
           >
-            <Button>
+            <Button className="product-upload-button">
               <FaUpload /> Rasmni tanlash
             </Button>
           </Upload>
           <Form.Item>
             {imageUrl && (
-              <div style={{ marginTop: 20 }}>
+              <div className="product-upload-preview">
                 <p>Yuklangan rasm:</p>
-                <img src={imageUrl} alt="Uploaded" style={{ width: 200 }} />
+                <img src={imageUrl} alt="Uploaded" className="product-upload-image" />
                 <p>
                   <a href={imageUrl} target="_blank" rel="noopener noreferrer">
                     Rasm URL manzili
@@ -481,7 +514,7 @@ const Product = () => {
             )}
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" htmlType="submit" className="product-submit-button">
               {editingProduct ? "Tahrirlash" : "Tovar qo'shish"}
             </Button>
           </Form.Item>
