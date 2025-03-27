@@ -76,8 +76,8 @@
 }
 
 .purchase {
-     color: #e74c3c;
-     font-weight: 600;
+     color: #333; 
+         font-weight: 600;
 }
 
 .profit {
@@ -96,7 +96,7 @@
 }
 
 .date {
-     color: #8e44ad;
+     color: coral;
      font-weight: 600;
 }
 

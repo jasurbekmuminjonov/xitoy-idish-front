@@ -430,6 +430,8 @@ const Partner = () => {
                     />
                </Modal>
 
+               
+
                {/* Модал для добавления/редактирования продукта */}
                <Modal
                     title={editingProduct ? "Tovar tahrirlash" : "Tovar qo'shish"}
