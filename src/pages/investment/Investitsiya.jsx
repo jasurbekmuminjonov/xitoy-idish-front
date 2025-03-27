@@ -8,9 +8,7 @@ import { useGetAllDebtorsQuery } from "../../context/service/debt.service";
 import { useGetProductsQuery } from "../../context/service/product.service";
 import { useGetExpensesQuery } from "../../context/service/expense.service";
 import { DollarOutlined, ShoppingCartOutlined, CreditCardOutlined, CalendarOutlined, RiseOutlined, HomeOutlined } from "@ant-design/icons";
-import "./investment.css";
-
-
+import "./investment.css"; // Yangi fayl nomi
 
 const cardGradients = [
      "linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%)",
@@ -20,7 +18,7 @@ const cardGradients = [
      "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)",
 ];
 
-// Компонент для карточки склада
+// Komponent uchun ombor kartasi
 const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
      const { data: mahsulotlar = [] } = useGetProductsByWarehouseQuery(ombor._id);
 
@@ -43,7 +41,6 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
                     const purchasePrice = Number(sale?.productId?.purchasePrice?.value) || 0;
                     return sum + (quantity * (sellingPrice - purchasePrice));
                }, 0);
-
                profitUZS = profitUSD * usdRate;
           } else {
                profitUSD = products.reduce((sum, product) => {
@@ -52,7 +49,6 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
                     const purchasePrice = Number(product.purchasePrice?.value) || 0;
                     return sum + (quantity * (sellingPrice - purchasePrice));
                }, 0);
-
                profitUZS = profitUSD * usdRate;
           }
 
@@ -79,42 +75,42 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
           <Card
                key={ombor._id}
                title={ombor.name}
-               className="warehouse-card"
+               className="invest-warehouse-card"
                style={cardStyle}
                headStyle={{ borderBottom: "none", fontSize: "20px", fontWeight: 700, color: "#333" }}
                extra={<Space></Space>}
           >
-               <p className="warehouse-address"><HomeOutlined />{ombor.address}</p>
+               <p className="invest-warehouse-address"><HomeOutlined />{ombor.address}</p>
                {stats ? (
-                    <div className="warehouse-stats">
-                         <div className="stat-item">
-                              <p><strong><CalendarOutlined /> Sana:</strong> <span className="date">{stats.latestDate}</span></p>
+                    <div className="invest-warehouse-stats">
+                         <div className="invest-stat-item">
+                              <p><strong><CalendarOutlined /> Sana:</strong> <span className="invest-date">{stats.latestDate}</span></p>
                          </div>
                          <Divider style={{ margin: "10px 0", borderColor: "#e8e8e8" }} />
-                         <div className="stat-item">
+                         <div className="invest-stat-item">
                               <p><strong><DollarOutlined /> Xarajat:</strong></p>
-                              <p><span className="purchase">{stats.purchaseUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS</span></p>
-                              <p><span className="purchase">{stats.purchaseUSD.toFixed(2)} $</span></p>
+                              <p><span className="invest-purchase">{stats.purchaseUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS</span></p>
+                              <p><span className="invest-purchase">{stats.purchaseUSD.toFixed(2)} $</span></p>
                          </div>
                          <Divider style={{ margin: "10px 0", borderColor: "#e8e8e8" }} />
-                         <div className="stat-item">
+                         <div className="invest-stat-item">
                               <p><strong><RiseOutlined /> Foyda:</strong></p>
-                              <p><span className="profit">{stats.profitUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS</span></p>
-                              <p><span className="profit">{stats.profitUSD.toFixed(2)} $</span></p>
+                              <p><span className="invest-profit">{stats.profitUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS</span></p>
+                              <p><span className="invest-profit">{stats.profitUSD.toFixed(2)} $</span></p>
                          </div>
                          <Divider style={{ margin: "10px 0", borderColor: "#e8e8e8" }} />
-                         <div className="stat-item">
-                              <p><strong><ShoppingCartOutlined /> Jami (mavjud):</strong> <span className="quantity">{stats.totalQuantity} dona</span></p>
+                         <div className="invest-stat-item">
+                              <p><strong><ShoppingCartOutlined /> Jami (mavjud):</strong> <span className="invest-quantity">{stats.totalQuantity} dona</span></p>
                          </div>
                     </div>
                ) : (
-                    <p className="no-data">Bu omborda mahsulotlar yo'q.</p>
+                    <p className="invest-no-data">Bu omborda mahsulotlar yo'q.</p>
                )}
           </Card>
      );
 };
 
-// Компонент для общей статистики
+// Umumiy statistika uchun komponent
 const SummaryCard = ({ expenses, debtors, products, sales, usdRate }) => {
      const totalExpensesUZS = expenses.reduce((total, item) => total + (Number(item.amount) || 0), 0);
      const totalExpensesUSD = totalExpensesUZS / usdRate;
@@ -144,39 +140,39 @@ const SummaryCard = ({ expenses, debtors, products, sales, usdRate }) => {
      return (
           <Card
                title="Umumiy statistika"
-               className="summary-card"
+               className="invest-summary-card"
                headStyle={{ borderBottom: "none", fontSize: "20px", fontWeight: 700, color: "white" }}
           >
-               <div className="warehouse-stats">
-                    <div className="stat-item">
+               <div className="invest-warehouse-stats">
+                    <div className="invest-stat-item">
                          <p><strong><DollarOutlined /> Umumiy xarajat:</strong></p>
-                         <p><span className="purchase">{totalExpensesUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
-                         <p><span className="purchase">{totalExpensesUSD.toFixed(2)} $</span></p>
+                         <p><span className="invest-purchase">{totalExpensesUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
+                         <p><span className="invest-purchase">{totalExpensesUSD.toFixed(2)} $</span></p>
                     </div>
                     <Divider style={{ margin: "10px 0", borderColor: "rgba(255, 255, 255, 0.2)" }} />
-                    <div className="stat-item">
+                    <div className="invest-stat-item">
                          <p><strong><CreditCardOutlined /> Umumiy nasiya:</strong></p>
-                         <p><span className="debt">{totalDebtUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
-                         <p><span className="debt">{totalDebtUSD.toFixed(2)} $</span></p>
+                         <p><span className="invest-debt">{totalDebtUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
+                         <p><span className="invest-debt">{totalDebtUSD.toFixed(2)} $</span></p>
                     </div>
                     <Divider style={{ margin: "10px 0", borderColor: "rgba(255, 255, 255, 0.2)" }} />
-                    <div className="stat-item">
+                    <div className="invest-stat-item">
                          <p><strong><ShoppingCartOutlined /> Umumiy mahsulotlar tan narxi:</strong></p>
-                         <p><span className="purchase">{totalPurchaseUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
-                         <p><span className="purchase">{totalPurchaseUSD.toFixed(2)} $</span></p>
+                         <p><span className="invest-purchase">{totalPurchaseUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
+                         <p><span className="invest-purchase">{totalPurchaseUSD.toFixed(2)} $</span></p>
                     </div>
                     <Divider style={{ margin: "10px 0", borderColor: "rgba(255, 255, 255, 0.2)" }} />
-                    <div className="stat-item">
+                    <div className="invest-stat-item">
                          <p><strong><RiseOutlined /> Sotuvning sof daromadi:</strong></p>
-                         <p><span className="profit">{totalSalesProfitUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
-                         <p><span className="profit">{totalSalesProfitUSD.toFixed(2)} $</span></p>
+                         <p><span className="invest-profit">{totalSalesProfitUZS.toLocaleString("uz-UZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} so'm</span></p>
+                         <p><span className="invest-profit">{totalSalesProfitUSD.toFixed(2)} $</span></p>
                     </div>
                </div>
           </Card>
      );
 };
 
-// Основной компонент
+// Asosiy komponent
 export default function Investitsiya() {
      const { data: omborlar = [] } = useGetWarehousesQuery();
      const { data: usdRateData, isLoading: usdLoading } = useGetUsdRateQuery();
@@ -188,12 +184,12 @@ export default function Investitsiya() {
      const usdRate = usdRateData?.rate || 12960;
 
      if (usdLoading || salesLoading || debtorsLoading || productsLoading || expensesLoading) {
-          return <div className="loading">Yuklanmoqda...</div>;
+          return <div className="invest-loading">Yuklanmoqda...</div>;
      }
 
      return (
-          <div className="investment-container">
-               <div className="warehouse-cards">
+          <div className="invest-container">
+               <div className="invest-warehouse-cards">
                     <SummaryCard expenses={expenses} debtors={debtors} products={products} sales={sales} usdRate={usdRate} />
                     {omborlar.map((ombor, index) => (
                          <WarehouseCard key={ombor._id} ombor={ombor} usdRate={usdRate} sales={sales} index={index} />

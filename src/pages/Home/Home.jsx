@@ -13,6 +13,7 @@ import {
   BarChartOutlined,
   ExclamationCircleOutlined,
   MoneyCollectOutlined, // Rasxodlar uchun yangi ikona
+  ScheduleOutlined
 } from "@ant-design/icons";
 import Admin from "../Adminlar/Adminlar";
 import Ombor from "../Ombor/Ombor";
@@ -31,6 +32,7 @@ import Promo from "../promo/Promo";
 import Statistika from "../statistika/statistika";
 import Investitsiya from "../investment/Investitsiya";
 import Partner from "../partner/Partner";
+import ReconciliationAct from "../reconciliation-act/ReconciliationAct"
 
 const { Header, Sider, Content } = Layout;
 
@@ -68,7 +70,12 @@ export default function Home() {
         return <Brak />;
       case "expense":
         return <Expense />;
+
+      case "report":
+        return <ReconciliationAct />;
+      
       case "home":
+    
       default:
         return <Investitsiya />;
     }
@@ -101,7 +108,7 @@ export default function Home() {
             Mahsulotlar
           </Menu.Item>
           <Menu.Item key="partner" icon={<ShoppingOutlined />}>
-            Xamkor 
+            Xamkorlar
           </Menu.Item>
           <Menu.Item key="kassa" icon={<DollarOutlined />}>
             Kassa
@@ -121,11 +128,17 @@ export default function Home() {
           <Menu.Item key="brak" icon={<ExclamationCircleOutlined />}>
             Brak Mahsulotlar
           </Menu.Item>
+          
           <Menu.Item key="expense" icon={<MoneyCollectOutlined />}>
             {" "}
             {/* Rasxodlar uchun yangi ikona */}
             Rasxodlar
           </Menu.Item>
+
+          <Menu.Item key="report" icon={< ScheduleOutlined  />}>
+            Shartnoma
+          </Menu.Item>
+
         </Menu>
       </Sider>
       <Layout className="site-layout">

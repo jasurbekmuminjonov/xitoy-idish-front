@@ -24,7 +24,7 @@ const { Option } = Select;
 const Kassa = () => {
   // Данные из Product и Partner
   const { data: products = [] } = useGetProductsQuery();
-  const { data: partnerProducts = [] } = useGetProductsPartnerQuery(); // Добавляем Partner
+  const { data: partnerProducts = [] } = useGetProductsPartnerQuery();
   const { data: promos = [] } = useGetPromosQuery();
   const { data: usdRate = [] } = useGetUsdRateQuery();
   const { data: clients = [] } = useGetClientsQuery();
@@ -79,9 +79,10 @@ const Kassa = () => {
   useEffect(() => {
     const result = allProducts.filter((product) => {
       const name = (product.name || "").toLowerCase();
+      const code = (product.code || "").toLowerCase();
       const barcode = (product.barcode || "").toLowerCase();
       const searchLower = searchText.toLowerCase();
-      return name.includes(searchLower) || barcode.includes(searchLower);
+      return name.includes(searchLower) || barcode.includes(searchLower)|| code.includes(searchLower);
     });
     setFilteredProducts(searchText ? result : []);
   }, [allProducts, searchText]);

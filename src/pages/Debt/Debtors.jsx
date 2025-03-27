@@ -112,7 +112,7 @@ const Debtors = () => {
     <div className="page">
       <div className="page_header" style={{ display: "flex", alignItems: "center", gap: "12px", color: "#fff", height: "40px", marginTop: "10px" }}>
 
-        <h1>Qarzdorlar</h1>
+        <h1 style={{ color:"#001529"}} >Qarzdorlar</h1>
         {
           role !== "admin" && (
             <Button onClick={() => navigate("/")} type="primary">

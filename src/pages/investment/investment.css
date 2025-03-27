@@ -1,27 +1,27 @@
-.investment-container {
+.invest-container {
      padding: 30px;
      background-color: #f5f7fa;
      min-height: 100vh;
 }
 
-.warehouse-cards {
+.invest-warehouse-cards {
      display: grid;
      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
      gap: 25px;
 }
 
-.warehouse-card {
+.invest-warehouse-card {
      transition: transform 0.3s ease, box-shadow 0.3s ease;
      border-radius: 12px;
      overflow: hidden;
 }
 
-.warehouse-card:hover {
+.invest-warehouse-card:hover {
      transform: translateY(-8px);
      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.summary-card {
+.invest-summary-card {
      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
      color: white;
      border: none;
@@ -30,12 +30,12 @@
      transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.summary-card:hover {
+.invest-summary-card:hover {
      transform: translateY(-8px);
      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.warehouse-address {
+.invest-warehouse-address {
      font-size: 14px;
      color: #666;
      margin-bottom: 15px;
@@ -45,15 +45,15 @@
      gap: 8px;
 }
 
-.warehouse-stats {
+.invest-warehouse-stats {
      padding: 0 10px;
 }
 
-.stat-item {
+.invest-stat-item {
      margin-bottom: 10px;
 }
 
-.stat-item p {
+.invest-stat-item p {
      margin: 4px 0;
      font-size: 15px;
      color: #333;
@@ -62,7 +62,7 @@
      gap: 8px;
 }
 
-.stat-item strong {
+.invest-stat-item strong {
      color: #444;
      font-weight: 600;
      display: flex;
@@ -70,44 +70,44 @@
      gap: 8px;
 }
 
-.summary-card .stat-item p,
-.summary-card .stat-item strong {
+.invest-summary-card .invest-stat-item p,
+.invest-summary-card .invest-stat-item strong {
      color: #ffffff;
 }
 
-.purchase {
-     color: #333; 
-         font-weight: 600;
+.invest-purchase {
+     color: #333;
+     font-weight: 600;
 }
 
-.profit {
+.invest-profit {
      color: #2ecc71;
      font-weight: 600;
 }
 
-.quantity {
+.invest-quantity {
      color: #3498db;
      font-weight: 600;
 }
 
-.debt {
+.invest-debt {
      color: #f1c40f;
      font-weight: 600;
 }
 
-.date {
+.invest-date {
      color: coral;
      font-weight: 600;
 }
 
-.no-data {
+.invest-no-data {
      text-align: center;
      color: #888;
      font-style: italic;
      margin: 20px 0;
 }
 
-.loading {
+.invest-loading {
      text-align: center;
      font-size: 18px;
      color: #888;

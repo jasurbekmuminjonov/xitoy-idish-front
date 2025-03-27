@@ -55,6 +55,5 @@ export const {
      useGetProductsByWarehousePartnerQuery,
      useDeleteProductPartnerMutation,
      useUpdateProductPartnerMutation,
-     
 
 } = productPartnerApi;

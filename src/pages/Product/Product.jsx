@@ -46,6 +46,8 @@ const BarcodePrint = React.forwardRef(({ barcode }, ref) => (
 const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
+  const [imageModalVisible, setImageModalVisible] = useState(false); // Для модала с увеличенным изображением
+  const [selectedImage, setSelectedImage] = useState(""); // Для хранения URL выбранного изображения
   const [editingProduct, setEditingProduct] = useState("");
   const [editingSource, setEditingSource] = useState("");
   const { data: products = [], isLoading: productsLoading } = useGetProductsQuery();
@@ -67,14 +69,18 @@ const Product = () => {
     ...products.map((product) => ({
       ...product,
       source: "product",
-      name: product.name || "Noma'lum", // Значение по умолчанию
-      barcode: product.barcode || "",   // Значение по умолчанию
+      name: product.name || "Noma'lum",
+      barcode: product.barcode || "",
+      name_partner: product.name_partner || "",
+      partner_number: product.partner_number || "",
     })),
     ...partnerProducts.map((product) => ({
       ...product,
       source: "partner",
-      name: product.name || "Noma'lum", // Значение по умолчанию
-      barcode: product.barcode || "",   // Значение по умолчанию
+      name: product.name || "Noma'lum",
+      barcode: product.barcode || "",
+      name_partner: product.name_partner || "",
+      partner_number: product.partner_number || "",
     })),
   ];
 
@@ -112,6 +118,11 @@ const Product = () => {
     setImageUrl("");
     setEditingSource("");
     form.resetFields();
+  };
+
+  const handleImageModalCancel = () => {
+    setImageModalVisible(false);
+    setSelectedImage("");
   };
 
   const onFinish = async (values) => {
@@ -183,28 +194,23 @@ const Product = () => {
       dataIndex: "name",
       key: "name",
       render: (text, record) => (
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {record.image_url ? (
             <img
               src={record.image_url}
               alt={record.name}
-              style={{
-                width: "100px",
-                height: "100px",
-                marginRight: "10px",
-                objectFit: "contain",
+              className="table-product-image"
+              onClick={() => {
+                setSelectedImage(record.image_url);
+                setImageModalVisible(true);
               }}
             />
           ) : (
             <div
-              style={{
-                width: "50px",
-                height: "50px",
-                marginRight: "10px",
-                backgroundColor: "#f0f0f0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+              className="table-no-image"
+              onClick={() => {
+                setSelectedImage("");
+                setImageModalVisible(true);
               }}
             >
               Rasm yo'q
@@ -215,9 +221,15 @@ const Product = () => {
       ),
     },
     {
-      title: "Xamkor",
+      title: "Xamkor ismi",
       dataIndex: "name_partner",
       key: "name_partner",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Xamkor raqami",
+      dataIndex: "partner_number",
+      key: "partner_number",
       render: (text) => text || "-",
     },
     {
@@ -405,6 +417,7 @@ const Product = () => {
         rowKey="_id"
       />
 
+      {/* Модал для добавления/редактирования продукта */}
       <Modal
         title={editingProduct ? "Tovar tahrirlash" : "Tovar qo'shish"}
         visible={modalVisible}
@@ -425,6 +438,12 @@ const Product = () => {
             rules={[{ required: true, message: "Tovar nomini kiriting!" }]}
           >
             <Input placeholder="Tovar nomi" className="product-form-input" />
+          </Form.Item>
+          <Form.Item name="name_partner" label="Xamkor ismi">
+            <Input placeholder="Xamkor ismi" className="product-form-input" />
+          </Form.Item>
+          <Form.Item name="partner_number" label="Xamkor raqami">
+            <Input placeholder="Xamkor raqami" className="product-form-input" />
           </Form.Item>
           <Form.Item
             label="Tovar o'lchami"
@@ -555,6 +574,27 @@ const Product = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Модал для отображения увеличенного изображения */}
+      <Modal
+        title="Tovar rasmi"
+        visible={imageModalVisible}
+        onCancel={handleImageModalCancel}
+        footer={null}
+        className="image-modal"
+      >
+        {selectedImage ? (
+          <img
+            src={selectedImage}
+            alt="Enlarged"
+            className="enlarged-image"
+          />
+        ) : (
+          <div className="no-image-placeholder">
+            Rasm yo'q
+          </div>
+        )}
       </Modal>
 
       <div style={{ display: "none" }}>
