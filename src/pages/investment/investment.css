@@ -35,6 +35,27 @@
      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
+/* Стили для заголовков карточек */
+.invest-warehouse-card .ant-card-head {
+     border-bottom: none;
+}
+
+.invest-warehouse-card .ant-card-head-title {
+     font-size: 20px;
+     font-weight: 700;
+     color: #333;
+}
+
+.invest-summary-card .ant-card-head {
+     border-bottom: none;
+}
+
+.invest-summary-card .ant-card-head-title {
+     font-size: 20px;
+     font-weight: 700;
+     color: white;
+}
+
 .invest-warehouse-address {
      font-size: 14px;
      color: #666;

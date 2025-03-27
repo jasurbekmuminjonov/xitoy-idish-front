@@ -77,8 +77,8 @@ const WarehouseCard = ({ ombor, usdRate, sales, index }) => {
                title={ombor.name}
                className="invest-warehouse-card"
                style={cardStyle}
-               headStyle={{ borderBottom: "none", fontSize: "20px", fontWeight: 700, color: "#333" }}
-               extra={<Space></Space>}
+               headStyle={{ borderBottom: "none" }} // Оставляем только минимальный headStyle
+               extra={<Space />}
           >
                <p className="invest-warehouse-address"><HomeOutlined />{ombor.address}</p>
                {stats ? (
@@ -141,7 +141,7 @@ const SummaryCard = ({ expenses, debtors, products, sales, usdRate }) => {
           <Card
                title="Umumiy statistika"
                className="invest-summary-card"
-               headStyle={{ borderBottom: "none", fontSize: "20px", fontWeight: 700, color: "white" }}
+               headStyle={{ borderBottom: "none" }} // Оставляем только минимальный headStyle
           >
                <div className="invest-warehouse-stats">
                     <div className="invest-stat-item">

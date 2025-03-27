@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useGetProductsQuery } from "../../context/service/product.service";
-import { useGetProductsPartnerQuery } from "../../context/service/partner.service"; // Добавляем Partner
+import { useGetProductsPartnerQuery } from "../../context/service/partner.service";
 import {
   useGetClientsQuery,
   useCreateClientMutation,
@@ -18,15 +18,17 @@ import {
   useGetExpensesQuery,
 } from "../../context/service/expense.service";
 import moment from "moment";
+import html2pdf from "html2pdf.js";
+import yodgor_abdullaev from "../../assets/yodgor_abdullaev.svg";
+import zolotayaroza77 from "../../assets/zolotayaroza77.svg";
 
 const { Option } = Select;
 
 const Kassa = () => {
-  // Данные из Product и Partner
   const { data: products = [] } = useGetProductsQuery();
   const { data: partnerProducts = [] } = useGetProductsPartnerQuery();
   const { data: promos = [] } = useGetPromosQuery();
-  const { data: usdRate = [] } = useGetUsdRateQuery();
+  const { data: usdRate = {} } = useGetUsdRateQuery(); // Предполагаем, что usdRate = { rate: 13000 }
   const { data: clients = [] } = useGetClientsQuery();
   const { data: expenses = [] } = useGetExpensesQuery();
   const [createClient] = useCreateClientMutation();
@@ -42,6 +44,7 @@ const Kassa = () => {
   const [selectedClient, setSelectedClient] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const [codeSearchText, setCodeSearchText] = useState("");
   const [basket, setBasket] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -58,34 +61,42 @@ const Kassa = () => {
     ...products.map((product) => ({
       ...product,
       source: "product",
-      name: product.name || "Noma'lum", // Значение по умолчанию
-      barcode: product.barcode || "",   // Значение по умолчанию
+      name: product.name || "Noma'lum",
+      barcode: product.barcode || "",
+      code: product.code || "",
     })),
     ...partnerProducts.map((product) => ({
       ...product,
       source: "partner",
-      name: product.name || "Noma'lum", // Значение по умолчанию
-      barcode: product.barcode || "",   // Значение по умолчанию
+      name: product.name || "Noma'lum",
+      barcode: product.barcode || "",
+      code: product.code || "",
     })),
   ];
 
-  // Обновление категорий расходов
   useEffect(() => {
     const uniqueCategories = [...new Set(expenses.map((expense) => expense.category))];
     setCategories(uniqueCategories);
   }, [expenses]);
 
-  // Фильтрация продуктов при изменении текста поиска
   useEffect(() => {
     const result = allProducts.filter((product) => {
       const name = (product.name || "").toLowerCase();
       const code = (product.code || "").toLowerCase();
       const barcode = (product.barcode || "").toLowerCase();
       const searchLower = searchText.toLowerCase();
-      return name.includes(searchLower) || barcode.includes(searchLower)|| code.includes(searchLower);
+      const codeSearchLower = codeSearchText.toLowerCase();
+
+      const matchesSearchText = name.includes(searchLower) || barcode.includes(searchLower);
+      const matchesCodeSearch = code.includes(codeSearchLower);
+
+      if (searchText && codeSearchText) {
+        return matchesSearchText && matchesCodeSearch;
+      }
+      return matchesSearchText || matchesCodeSearch;
     });
-    setFilteredProducts(searchText ? result : []);
-  }, [allProducts, searchText]);
+    setFilteredProducts((searchText || codeSearchText) ? result : []);
+  }, [allProducts, searchText, codeSearchText]);
 
   const handleCancel = () => {
     setXarajatModal(false);
@@ -104,11 +115,25 @@ const Kassa = () => {
     categoryForm.resetFields();
   };
 
-  // Генерация PDF чека
-  const generatePDF = () => {
-    const printWindow = window.open("", "", "width=600,height=600");
-    printWindow.document.open();
+  // Функция для пересчёта цены при смене валюты
+  const convertPrice = (price, fromCurrency, toCurrency, rate) => {
+    if (fromCurrency === toCurrency) return price;
+    if (fromCurrency === "USD" && toCurrency === "SUM") {
+      return price * rate;
+    }
+    if (fromCurrency === "SUM" && toCurrency === "USD") {
+      return price / rate;
+    }
+    return price;
+  };
 
+  // Форматирование числа без лишних нулей
+  const formatNumber = (num) => {
+    return Number(num).toString(); // Убираем .00, но сохраняем дробную часть, если она есть
+  };
+
+  // Генерация PDF чека с помощью html2pdf.js
+  const generatePDF = () => {
     const { totalUSD, totalSUM } = basket.reduce(
       (acc, item) => {
         const promo = promos.find((p) => p._id === paymentDiscount);
@@ -169,10 +194,10 @@ const Kassa = () => {
                 ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
                 : null
           }</td>
-          <td>${item.sellingPrice.value?.toFixed(2)}</td>
+          <td>${formatNumber(item.sellingPrice.value)}</td>
           <td>${item.currency === "USD" ? "Доллар" : "Сум"}</td>
           <td>${promo ? `${promo.percent} ${promo.type === "percent" ? "%" : "сум"}` : "—"}</td>
-          <td>${discountedPrice?.toFixed(2)}</td>
+          <td>${formatNumber(discountedPrice)}</td>
         </tr>
       `;
       })
@@ -180,9 +205,10 @@ const Kassa = () => {
 
     const content = `
       <div style="width:210mm; height:297mm; display:flex; flex-direction:column; gap:6px; padding:12px; font-family:sans-serif">
-        <b style="display:flex; text-align:center; width:100%; justify-content:center; font-size:sans-serif">
-          ${moment().format("DD.MM.YYYY")} даги Хисобварак-фактура
-        </b><br />
+        <div style="display:flex; justify-content:space-between; width:100%;">
+          <b>${moment().format("DD.MM.YYYY, HH:mm:ss")} даги Хисобварак-фактура</b>
+          <span>Хисобварак-фактура</span>
+        </div>
         <div style="display:flex; width:100%;">
           <div style="display:flex; flex-direction:column; gap:6px; width:50%;">
             <div style="display:flex; flex-direction:column; width:100%; justify-content:space-between;">
@@ -223,24 +249,50 @@ const Kassa = () => {
             ${tableRows}
           </tbody>
         </table>
-        <b>Жами тўловнинг доллар билан тўланадиган қисми: ${totalUSD?.toFixed(2)} доллар</b>
-        <b>Жами тўловнинг сyм билан тўланадиган қисми: ${totalSUM?.toFixed(2)} сyм</b>
+        <b>Жами тўловнинг доллар билан тўланадиган қисми: ${formatNumber(totalUSD)} доллар</b>
+        <b>Жами тўловнинг сyм билан тўланадиган қисми: ${formatNumber(totalSUM)} сyм</b>
+        <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+          <div style="text-align: center;">
+            <img src="${yodgor_abdullaev}" style="width: 100px; height: 100px; border-radius: 10px; background: white; padding: 10px;" />
+            <p style="margin: 5px 0; font-size: 12px; color: #000;">@YODGOR_ABDULLAE</p>
+          </div>
+          <div style="text-align: center;">
+            <img src="${zolotayaroza77}" style="width: 100px; height: 100px; border-radius: 10px; background: white; padding: 10px;" />
+            <p style="margin: 5px 0; font-size: 12px; color: #000;">@ZOLOTAYAROZA77</p>
+          </div>
+        </div>
       </div>
     `;
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Хисобварак-фактура</title>
-        </head>
-        <body>
-          ${content}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
+    const element = document.createElement("div");
+    element.innerHTML = content;
+    document.body.appendChild(element);
+
+    const opt = {
+      margin: 0,
+      filename: `invoice_${moment().format("DD-MM-YYYY_HH-mm-ss")}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .toPdf()
+      .get("pdf")
+      .then((pdf) => {
+        document.body.removeChild(element);
+        const pdfBlob = pdf.output("bloburl");
+        const printWindow = window.open(pdfBlob);
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      })
+      .catch((error) => {
+        console.error("Ошибка при генерации PDF:", error);
+        document.body.removeChild(element);
+      });
   };
 
   // Колонки для таблицы продуктов
@@ -278,36 +330,33 @@ const Kassa = () => {
     },
     { title: "O'lcham", dataIndex: "size", key: "size" },
     { title: "Ombor", render: (_, record) => record.warehouse?.name || "-" },
-    { title: "Shtrix kod", dataIndex: "barcode" },
+    { title: "Shtrix kod", dataIndex: "barcode", key: "barcode" },
+    { title: "Kod", dataIndex: "code", key: "code" },
     {
       title: "Umumiy vazni(kg)",
       dataIndex: "total_kg",
       key: "total_kg",
-      render: (text) => text?.toFixed(2),
+      render: (text) => formatNumber(text),
     },
     { title: "Dona soni", dataIndex: "quantity", key: "quantity" },
     {
       title: "Karobka soni",
       dataIndex: "box_quantity",
       key: "box_quantity",
-      render: (text) => text?.toFixed(2),
+      render: (text) => formatNumber(text),
     },
     {
       title: "Pachka soni",
       key: "package_quantity",
-      render: (_, record) => (record?.isPackage ? record?.package_quantity?.toFixed(2) : "-"),
+      render: (_, record) => (record?.isPackage ? formatNumber(record?.package_quantity) : "-"),
     },
     {
       title: "Sotish narxi",
       render: (_, record) => {
-        if (currency === record.currency) {
-          return record.sellingPrice?.value?.toFixed(2);
-        } else if (currency === "SUM" && record.currency === "USD") {
-          return (record.sellingPrice?.value * usdRate?.rate)?.toFixed(2);
-        } else if (currency === "USD" && record.currency === "SUM") {
-          return (record.sellingPrice?.value / usdRate?.rate)?.toFixed(2);
-        }
-        return Number(record.sellingPrice?.value)?.toFixed(2);
+        const price = record.sellingPrice?.value || 0;
+        const productCurrency = record.currency || "SUM";
+        const convertedPrice = convertPrice(price, productCurrency, currency, usdRate?.rate);
+        return `${formatNumber(convertedPrice)} ${currency === "SUM" ? "сум" : "$"}`;
       },
     },
     {
@@ -317,18 +366,20 @@ const Kassa = () => {
           onClick={() => {
             const existProduct = basket.find((item) => item._id === record._id);
             if (!existProduct) {
+              const price = record.sellingPrice?.value || 0;
+              const productCurrency = record.currency || "SUM";
               setBasket([
                 ...basket,
                 {
                   ...record,
                   quantity: 1,
+                  currency: currency, // Текущая валюта в момент добавления
+                  originalPrice: {
+                    value: price,
+                    currency: productCurrency, // Исходная валюта продукта
+                  },
                   sellingPrice: {
-                    value:
-                      record.sellingPrice?.currency === "USD" && currency === "SUM"
-                        ? record.sellingPrice?.value * usdRate?.rate
-                        : record.sellingPrice?.currency === "SUM" && currency === "USD"
-                          ? record.sellingPrice?.value / usdRate?.rate
-                          : record.sellingPrice?.value,
+                    value: convertPrice(price, productCurrency, currency, usdRate?.rate),
                     currency: currency,
                   },
                 },
@@ -346,7 +397,6 @@ const Kassa = () => {
     },
   ];
 
-  // Колонки для таблицы корзины
   const basketColumn = [
     {
       title: "Tovar",
@@ -384,15 +434,28 @@ const Kassa = () => {
     {
       title: "Soni",
       render: (_, record) => (
-        <div className="table_actions">
+        <div
+          className="table_actions"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
           <Button
             onClick={() => {
-              record.quantity -= 1;
-              if (record.quantity === 0) {
-                setBasket(basket.filter((item) => item._id !== record._id));
-              } else {
-                setBasket([...basket]);
-              }
+              const newBasket = basket.map((item) => {
+                if (item._id === record._id) {
+                  const newQuantity = item.quantity - 1;
+                  if (newQuantity === 0) {
+                    return null; // Если количество становится 0, исключаем элемент
+                  }
+                  return { ...item, quantity: newQuantity };
+                }
+                return item;
+              }).filter((item) => item !== null); // Удаляем элементы, где quantity стало 0
+              setBasket(newBasket);
             }}
           >
             -
@@ -400,8 +463,13 @@ const Kassa = () => {
           <span style={{ width: "20px", textAlign: "center" }}>{record.quantity}</span>
           <Button
             onClick={() => {
-              record.quantity += 1;
-              setBasket([...basket]);
+              const newBasket = basket.map((item) => {
+                if (item._id === record._id) {
+                  return { ...item, quantity: item.quantity + 1 };
+                }
+                return item;
+              });
+              setBasket(newBasket);
             }}
           >
             +
@@ -417,19 +485,19 @@ const Kassa = () => {
           onChange={(value) => {
             const newBasket = basket.map((item) => {
               if (item._id === record._id) {
+                const convertedPrice = convertPrice(
+                  item.originalPrice.value,
+                  item.originalPrice.currency,
+                  value,
+                  usdRate?.rate
+                );
                 return {
                   ...item,
                   currency: value,
                   sellingPrice: {
                     ...item.sellingPrice,
-                    value:
-                      value === item.sellingPrice?.currency
-                        ? parseFloat(item.sellingPrice?.value || "0")
-                        : value === "SUM" && item.sellingPrice?.currency === "USD"
-                          ? parseFloat(item.sellingPrice?.value || "0") * usdRate?.rate
-                          : value === "USD" && item.sellingPrice?.currency === "SUM"
-                            ? parseFloat(item.sellingPrice?.value || "0") / usdRate?.rate
-                            : parseFloat(item.sellingPrice?.value || "0"),
+                    value: convertedPrice,
+                    currency: value,
                   },
                 };
               }
@@ -446,26 +514,34 @@ const Kassa = () => {
     {
       title: "Sotish narxi",
       render: (_, record) => (
-        <Input
-          style={{ width: "100px" }}
-          type="number"
-          onChange={(e) => {
-            const newBasket = basket.map((item) => {
-              if (item._id === record._id) {
-                return {
-                  ...item,
-                  sellingPrice: {
-                    ...item.sellingPrice,
-                    value: parseFloat(e.target.value) || 0,
-                  },
-                };
-              }
-              return item;
-            });
-            setBasket(newBasket);
-          }}
-          value={Number(record?.sellingPrice?.value)?.toFixed(2)}
-        />
+        <div>
+          <Input
+            style={{ width: "100px" }}
+            type="number"
+            onChange={(e) => {
+              const newPrice = parseFloat(e.target.value) || 0;
+              const newBasket = basket.map((item) => {
+                if (item._id === record._id) {
+                  return {
+                    ...item,
+                    sellingPrice: {
+                      ...item.sellingPrice,
+                      value: newPrice,
+                    },
+                    originalPrice: {
+                      value: convertPrice(newPrice, item.currency, item.originalPrice.currency, usdRate?.rate),
+                      currency: item.originalPrice.currency,
+                    },
+                  };
+                }
+                return item;
+              });
+              setBasket(newBasket);
+            }}
+            value={record?.sellingPrice?.value}
+          />
+          <span style={{ marginLeft: "5px" }}>{record.currency === "SUM" ? "сум" : "$"}</span>
+        </div>
       ),
     },
     {
@@ -499,7 +575,6 @@ const Kassa = () => {
     },
   ];
 
-  // Обработка продажи
   const handleSell = async () => {
     generatePDF();
     if (
@@ -562,7 +637,7 @@ const Kassa = () => {
                     ? item.quantity * item.quantity_per_package
                     : selectedUnit === "box_quantity"
                       ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
-                      : null)?.toFixed(2),
+                      : null),
               currency: item.currency,
               sellingPrice: getDiscountedPrice(
                 item.sellingPrice.value,
@@ -573,7 +648,7 @@ const Kassa = () => {
                     : selectedUnit === "box_quantity"
                       ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
                       : null
-              )?.toFixed(2),
+              ),
               paymentMethod,
               warehouseId: item.warehouse?._id,
               discount: paymentDiscount ? promos.find((p) => p._id === paymentDiscount).percent : 0,
@@ -607,7 +682,7 @@ const Kassa = () => {
                     : selectedUnit === "box_quantity"
                       ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
                       : null
-              )?.toFixed(2),
+              ),
               warehouseId: item.warehouse?._id,
               paymentMethod,
             }).unwrap()
@@ -633,15 +708,23 @@ const Kassa = () => {
   return (
     <div className="page" style={{ marginTop: "8px", paddingInline: "4px" }}>
       <div className="products">
-        <div className="products_header">
-          <input
+        <div className="products_header" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <Input
             autoFocus
             type="search"
             placeholder="Tovarni nomi yoki shtrix kodi orqali topish"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
+            style={{ flex: 1, minWidth: "200px" }}
           />
-          <Select value={currency} onChange={(value) => setCurrency(value)}>
+          <Input
+            type="search"
+            placeholder="Kod orqali qidirish"
+            value={codeSearchText}
+            onChange={(e) => setCodeSearchText(e.target.value)}
+            style={{ flex: 1, minWidth: "200px" }}
+          />
+          <Select value={currency} onChange={(value) => setCurrency(value)} style={{ width: "100px" }}>
             <Option value="SUM">SUM</Option>
             <Option value="USD">USD</Option>
           </Select>
@@ -681,43 +764,58 @@ const Kassa = () => {
           />
           <p>
             Umumiy to'lov SUM:{" "}
-            {basket
-              .filter((b) => b.currency === "SUM")
-              .reduce(
-                (acc, item) =>
-                  acc +
-                  item.sellingPrice.value *
-                  (selectedUnit === "quantity"
-                    ? item.quantity
-                    : selectedUnit === "package_quantity"
-                      ? item.quantity * item.quantity_per_package
-                      : selectedUnit === "box_quantity"
-                        ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
-                        : null),
-                0
-              )
-              ?.toLocaleString()}{" "}
+            {formatNumber(
+              basket
+                .reduce(
+                  (acc, item) => {
+                    const totalPrice =
+                      item.sellingPrice.value *
+                      (selectedUnit === "quantity"
+                        ? item.quantity
+                        : selectedUnit === "package_quantity"
+                          ? item.quantity * item.quantity_per_package
+                          : selectedUnit === "box_quantity"
+                            ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
+                            : null);
+                    const promo = promos.find((p) => p._id === paymentDiscount);
+                    const discountedPrice = promo
+                      ? promo.type === "percent"
+                        ? totalPrice - (totalPrice / 100) * promo.percent
+                        : totalPrice - promo.percent
+                      : totalPrice;
+                    return acc + (item.currency === "SUM" ? discountedPrice : convertPrice(discountedPrice, "USD", "SUM", usdRate?.rate));
+                  },
+                  0
+                )
+            )}{" "}
             so'm
           </p>
           <p>
             Umumiy to'lov USD:{" "}
-            {basket
-              .filter((b) => b.currency === "USD")
-              .reduce(
-                (acc, item) =>
-                  acc +
-                  item.sellingPrice.value *
-                  (selectedUnit === "quantity"
-                    ? item.quantity
-                    : selectedUnit === "package_quantity"
-                      ? item.quantity * item.quantity_per_package
-                      : selectedUnit === "box_quantity"
-                        ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
-                        : null),
-                0
-              )
-              ?.toFixed(2)
-              ?.toLocaleString()}
+            {formatNumber(
+              basket
+                .reduce(
+                  (acc, item) => {
+                    const totalPrice =
+                      item.sellingPrice.value *
+                      (selectedUnit === "quantity"
+                        ? item.quantity
+                        : selectedUnit === "package_quantity"
+                          ? item.quantity * item.quantity_per_package
+                          : selectedUnit === "box_quantity"
+                            ? item.quantity * item.quantity_per_package * item.package_quantity_per_box
+                            : null);
+                    const promo = promos.find((p) => p._id === paymentDiscount);
+                    const discountedPrice = promo
+                      ? promo.type === "percent"
+                        ? totalPrice - (totalPrice / 100) * promo.percent
+                        : totalPrice - promo.percent
+                      : totalPrice;
+                    return acc + (item.currency === "USD" ? discountedPrice : convertPrice(discountedPrice, "SUM", "USD", usdRate?.rate));
+                  },
+                  0
+                )
+            )}{" "}
             $
           </p>
           <Button type="primary" onClick={() => setIsModalVisible(true)}>
