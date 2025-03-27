@@ -47,7 +47,7 @@ const Product = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState("");
-  const [editingSource, setEditingSource] = useState(""); // Для определения источника продукта (product или partner)
+  const [editingSource, setEditingSource] = useState("");
   const { data: products = [], isLoading: productsLoading } = useGetProductsQuery();
   const { data: partnerProducts = [], isLoading: partnerProductsLoading } = useGetProductsPartnerQuery();
   const { data: warehouses = [], isLoading: warehousesLoading } = useGetWarehousesQuery();
@@ -62,10 +62,20 @@ const Product = () => {
   const [searchName, setSearchName] = useState("");
   const [searchBarcode, setSearchBarcode] = useState("");
 
-  // Объединяем продукты из Product и Partner
+  // Объединяем продукты из Product и Partner с обработкой отсутствующих полей
   const allProducts = [
-    ...products.map((product) => ({ ...product, source: "product" })),
-    ...partnerProducts.map((product) => ({ ...product, source: "partner" })),
+    ...products.map((product) => ({
+      ...product,
+      source: "product",
+      name: product.name || "Noma'lum", // Значение по умолчанию
+      barcode: product.barcode || "",   // Значение по умолчанию
+    })),
+    ...partnerProducts.map((product) => ({
+      ...product,
+      source: "partner",
+      name: product.name || "Noma'lum", // Значение по умолчанию
+      barcode: product.barcode || "",   // Значение по умолчанию
+    })),
   ];
 
   const handleUpload = async (file) => {
@@ -94,7 +104,7 @@ const Product = () => {
 
   const handleAddProduct = () => {
     setModalVisible(true);
-    setEditingSource("product"); // По умолчанию добавляем в Product
+    setEditingSource("product");
   };
 
   const handleCancel = () => {
@@ -215,7 +225,6 @@ const Product = () => {
       dataIndex: "code",
       key: "code",
     },
-
     {
       title: "O'lcham",
       dataIndex: "size",
@@ -320,16 +329,16 @@ const Product = () => {
     },
   ];
 
+  // Улучшенная фильтрация с обработкой undefined/null
   const filteredProducts = allProducts.filter((product) => {
-    const matchesName = product.name
-      .toLowerCase()
-      .includes(searchName.toLowerCase());
-    const matchesBarcode = product.barcode
-      ?.toLowerCase()
-      .includes(searchBarcode.toLowerCase());
+    const name = (product.name || "").toLowerCase();
+    const barcode = (product.barcode || "").toLowerCase();
+    const searchNameLower = searchName.toLowerCase();
+    const searchBarcodeLower = searchBarcode.toLowerCase();
+
     return (
-      (searchName ? matchesName : true) &&
-      (searchBarcode ? matchesBarcode : true)
+      (searchName ? name.includes(searchNameLower) : true) &&
+      (searchBarcode ? barcode.includes(searchBarcodeLower) : true)
     );
   });
 
@@ -359,7 +368,7 @@ const Product = () => {
         </Space>
         <div className="stats">
           <p>
-            Umumiy tovar soni: {allProducts.reduce((a, b) => a + b.quantity, 0)}
+            Umumiy tovar soni: {allProducts.reduce((a, b) => a + (b.quantity || 0), 0)}
           </p>
           <p>
             Umumiy tovar tan narxi (sum):{" "}
@@ -367,7 +376,7 @@ const Product = () => {
               .filter((p) => p.currency === "SUM")
               .reduce(
                 (acc, product) =>
-                  acc + product.quantity * product.purchasePrice.value,
+                  acc + (product.quantity || 0) * (product.purchasePrice?.value || 0),
                 0
               )
               .toLocaleString()}{" "}
@@ -379,7 +388,7 @@ const Product = () => {
               .filter((p) => p.currency === "USD")
               .reduce(
                 (acc, product) =>
-                  acc + product.quantity * product.purchasePrice.value,
+                  acc + (product.quantity || 0) * (product.purchasePrice?.value || 0),
                 0
               )
               .toLocaleString()}
@@ -403,7 +412,13 @@ const Product = () => {
         footer={null}
         className="product-modal"
       >
-        <Form autoComplete="off" form={form} onFinish={onFinish} layout="vertical" className="product-form">
+        <Form
+          autoComplete="off"
+          form={form}
+          onFinish={onFinish}
+          layout="vertical"
+          className="product-form"
+        >
           <Form.Item
             name="name"
             label="Tovar nomi"
@@ -438,16 +453,33 @@ const Product = () => {
             <Input placeholder="Dona miqdori" type="number" className="product-form-input" />
           </Form.Item>
           <Form.Item label="Pachka miqdori" name="package_quantity">
-            <Input disabled={!isPackage} placeholder="Pachka miqdori" type="number" className="product-form-input" />
+            <Input
+              disabled={!isPackage}
+              placeholder="Pachka miqdori"
+              type="number"
+              className="product-form-input"
+            />
           </Form.Item>
           <Form.Item label="1 pachkadagi dona miqdori" name="quantity_per_package">
-            <Input disabled={!isPackage} placeholder="1 pachkadagi dona miqdori" type="number" className="product-form-input" />
+            <Input
+              disabled={!isPackage}
+              placeholder="1 pachkadagi dona miqdori"
+              type="number"
+              className="product-form-input"
+            />
           </Form.Item>
           <Form.Item label="Karobka miqdori" name="box_quantity">
             <Input placeholder="Karobka miqdori" type="number" className="product-form-input" />
           </Form.Item>
-          <Form.Item label={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} name="package_quantity_per_box">
-            <Input placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`} type="number" className="product-form-input" />
+          <Form.Item
+            label={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`}
+            name="package_quantity_per_box"
+          >
+            <Input
+              placeholder={`1 karobkadagi ${isPackage ? "pachka" : "dona"} miqdori`}
+              type="number"
+              className="product-form-input"
+            />
           </Form.Item>
           <div className="product-switch">
             <p className="product-switch-label">
@@ -474,7 +506,11 @@ const Product = () => {
             name="warehouse"
             rules={[{ required: true, message: "Ombor tanlang!" }]}
           >
-            <Select placeholder="Ombor tanlash" loading={warehousesLoading} className="product-form-select">
+            <Select
+              placeholder="Ombor tanlash"
+              loading={warehousesLoading}
+              className="product-form-select"
+            >
               {warehouses.map((warehouse) => (
                 <Option key={warehouse._id} value={warehouse._id}>
                   {warehouse?.name}

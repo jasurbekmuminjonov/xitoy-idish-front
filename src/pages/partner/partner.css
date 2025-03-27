@@ -2,14 +2,13 @@
 .partner-container {
      background: #f5f7fa;
      min-height: 100vh;
-     padding: 24px;
+     padding: 14px;
      color: #1a1a1a;
      font-family: 'Inter', sans-serif;
 }
 
 /* Хедер (без изменений) */
 .partner-page-header {
-  color: #001529;
   width: 100%;
   display: flex;
   align-items: start;
@@ -26,7 +25,6 @@
 
 
 .partner-add-button:hover {
-     background: linear-gradient(135deg, #e6f0fa 0%, #d9e4f5 100%) !important;
      transform: translateY(-2px) !important;
 }
 
