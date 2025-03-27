@@ -184,31 +184,32 @@ const Partner = () => {
                title: "Tovar",
                dataIndex: "name",
                key: "name",
-               sorter: (a, b) => a.name.localeCompare(b.name),
                render: (text, record) => (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                          {record.image_url ? (
                               <img
                                    src={record.image_url}
                                    alt={record.name}
                                    style={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: 6,
+                                        width: "40px",
+                                        height: "40px",
                                         objectFit: "contain",
+                                        borderRadius: "6px",
+                                        border: "1px solid #e5e7eb",
                                    }}
                               />
                          ) : (
                               <div
                                    style={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: 6,
+                                        width: "40px",
+                                        height: "40px",
                                         backgroundColor: "#f9fafb",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
-                                        fontSize: 12,
+                                        borderRadius: "6px",
+                                        border: "1px solid #e5e7eb",
+                                        fontSize: "12px",
                                         color: "#9ca3af",
                                    }}
                               >
@@ -223,86 +224,74 @@ const Partner = () => {
                title: "Kod",
                dataIndex: "code",
                key: "code",
-               sorter: (a, b) => (a.code || "").localeCompare(b.code || ""),
           },
           {
                title: "O'lcham",
                dataIndex: "size",
                key: "size",
-               sorter: (a, b) => (a.size || "").localeCompare(b.size || ""),
           },
           {
                title: "Umumiy vazni(kg)",
                dataIndex: "total_kg",
                key: "total_kg",
-               sorter: (a, b) => (a.total_kg || 0) - (b.total_kg || 0),
-               render: (text) => text?.toFixed(2) || "-",
+               render: (text) => text?.toFixed(2),
           },
           {
                title: "Dona soni",
                dataIndex: "quantity",
                key: "quantity",
-               sorter: (a, b) => (a.quantity || 0) - (b.quantity || 0),
           },
           {
                title: "Karobka soni",
                dataIndex: "box_quantity",
                key: "box_quantity",
-               sorter: (a, b) => (a.box_quantity || 0) - (b.box_quantity || 0),
-               render: (text) => text?.toFixed(2) || "-",
+               render: (text) => text?.toFixed(2),
           },
           {
                title: "Pachka soni",
                key: "package_quantity",
-               sorter: (a, b) => (a.package_quantity || 0) - (b.package_quantity || 0),
-               render: (_, record) => (record?.isPackage ? record?.package_quantity?.toFixed(2) : "-"),
+               render: (_, record) =>
+                    record?.isPackage ? record?.package_quantity?.toFixed(2) : "-",
           },
           {
                title: "Valyuta",
                dataIndex: "currency",
                key: "currency",
-               sorter: (a, b) => (a.currency || "").localeCompare(b.currency || ""),
           },
           {
                title: "Tan narxi",
                dataIndex: "purchasePrice",
                key: "purchasePrice",
-               sorter: (a, b) => (a.purchasePrice?.value || 0) - (b.purchasePrice?.value || 0),
                render: (text, record) => `${record.purchasePrice?.value || "-"}`,
           },
           {
                title: "Sotish narxi",
                dataIndex: "sellingPrice",
                key: "sellingPrice",
-               sorter: (a, b) => (a.sellingPrice?.value || 0) - (b.sellingPrice?.value || 0),
                render: (text, record) => `${record.sellingPrice?.value || "-"}`,
           },
           {
                title: "Ombor",
                dataIndex: "warehouse",
                key: "warehouse",
-               sorter: (a, b) => (a.warehouse?.name || "").localeCompare(b.warehouse?.name || ""),
                render: (text, record) => record?.warehouse?.name || "-",
           },
           {
                title: "Shtrix kod",
                dataIndex: "barcode",
                key: "barcode",
-               sorter: (a, b) => (a.barcode || "").localeCompare(b.barcode || ""),
           },
           {
                title: "Kategoriya",
                dataIndex: "category",
                key: "category",
-               sorter: (a, b) => (a.category || "").localeCompare(b.category || ""),
           },
           {
                title: "Amallar",
-               key: "actions",
                render: (_, record) => (
-                    <div className="product-actions">
+                    <div className="table-actions">
                          <Button
-                              className="product-action-button"
+                              className="table-action-button"
                               onClick={() => {
                                    setEditingProduct(record._id);
                                    form.setFieldsValue({
@@ -324,12 +313,12 @@ const Partner = () => {
                               okText="O'chirish"
                               cancelText="Orqaga"
                          >
-                              <Button className="product-action-button">
+                              <Button className="table-action-button">
                                    <MdDeleteForever />
                               </Button>
                          </Popconfirm>
                          <Button
-                              className="product-action-button"
+                              className="table-action-button"
                               onClick={() => setCurrentBarcode(record.barcode)}
                          >
                               <MdPrint />
@@ -405,7 +394,7 @@ const Partner = () => {
                     ))}
                </div>
 
-               {/* Модал с продуктами партнера */}
+               {/* Модал с продуктами партнера (таблица) */}
                <Modal
                     title={`Mahsulotlar - ${selectedPartner}`}
                     visible={partnerModalVisible}
@@ -433,14 +422,10 @@ const Partner = () => {
                     <Table
                          columns={columns}
                          dataSource={filteredModalProducts}
+                         loading={productsLoading}
                          rowKey="_id"
-                         pagination={{
-                              pageSize: 10, // 10 продуктов на страницу
-                              showSizeChanger: true,
-                              pageSizeOptions: ["10", "20", "50"],
-                              showTotal: (total) => `Jami: ${total} mahsulot`,
-                         }}
-                         scroll={{ x: 1500 }} // Горизонтальная прокрутка
+                         pagination={{ pageSize: 10 }}
+                         scroll={{ x: "max-content" }}
                          className="product-table"
                     />
                </Modal>
@@ -461,7 +446,6 @@ const Partner = () => {
                          >
                               <Input placeholder="Tovar nomi" className="partner-form-input" />
                          </Form.Item>
-
                          <Form.Item
                               name="name_partner"
                               label="Xamkor ismi"
@@ -469,7 +453,6 @@ const Partner = () => {
                          >
                               <Input placeholder="Xamkor ismi" className="partner-form-input" />
                          </Form.Item>
-
                          <Form.Item
                               label="Tovar o'lchami"
                               name="size"
